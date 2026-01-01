@@ -10,6 +10,7 @@ import { ImmersiveBackground } from "@/components/immersive-background";
 import { StabilitySimulator } from "@/components/stability-simulator";
 import { ConsciousnessProbe } from "@/components/consciousness-probe";
 import { GlitchText } from "@/components/glitch-text";
+import { UserNav } from "@/components/user-nav";
 import generatedImage from '@assets/generated_images/abstract_ethereal_space_neural_network_background.png';
 
 export default function HomePage() {
@@ -17,6 +18,13 @@ export default function HomePage() {
     <ScrollArea className="h-screen w-full bg-transparent">
       
       <ImmersiveBackground imageSrc={generatedImage} />
+
+      <header className="fixed top-0 left-0 right-0 z-50 p-4 flex justify-between items-center bg-gradient-to-b from-black/50 to-transparent">
+        <div className="flex items-center gap-2">
+          <span className="text-cyan-400 font-display font-bold text-lg tracking-tight">SCD</span>
+        </div>
+        <UserNav />
+      </header>
       
       {/* Hero Section */}
       <section className="relative h-screen flex flex-col items-center justify-center overflow-hidden">

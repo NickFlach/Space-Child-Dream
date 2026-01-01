@@ -3,30 +3,9 @@ import { pgTable, text, varchar, serial, integer, timestamp, boolean, real, json
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-// ============================================
-// USERS & AUTHENTICATION
-// ============================================
-
-export const users = pgTable("users", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  email: text("email").unique(),
-  username: text("username").unique(),
-  displayName: text("display_name"),
-  avatarUrl: text("avatar_url"),
-  bio: text("bio"),
-  stripeCustomerId: text("stripe_customer_id"),
-  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
-  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
-});
-
-export const insertUserSchema = createInsertSchema(users).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
-
-export type InsertUser = z.infer<typeof insertUserSchema>;
-export type User = typeof users.$inferSelect;
+// Re-export auth models (users and sessions tables)
+export * from "./models/auth";
+import { users } from "./models/auth";
 
 // ============================================
 // THOUGHTS (Core Consciousness Probe Data)
@@ -154,16 +133,6 @@ export const insertSharedVisualizationSchema = createInsertSchema(sharedVisualiz
 
 export type InsertSharedVisualization = z.infer<typeof insertSharedVisualizationSchema>;
 export type SharedVisualization = typeof sharedVisualizations.$inferSelect;
-
-// ============================================
-// SESSIONS (For Replit Auth)
-// ============================================
-
-export const sessions = pgTable("sessions", {
-  sid: varchar("sid").primaryKey(),
-  sess: jsonb("sess").notNull(),
-  expire: timestamp("expire").notNull(),
-});
 
 // Re-export chat models
 export * from "./models/chat";
