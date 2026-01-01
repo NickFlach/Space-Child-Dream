@@ -30,6 +30,7 @@ export interface IStorage {
   getThoughtByShareSlug(slug: string): Promise<Thought | undefined>;
   createThought(thought: InsertThought): Promise<Thought>;
   updateThought(id: number, data: Partial<InsertThought>): Promise<Thought | undefined>;
+  getGlobalThoughtFeed(limit?: number): Promise<Array<Thought & { userName?: string }>>;
 
   // Prompt Versions
   getActivePromptVersion(tier?: string): Promise<PromptVersion | undefined>;
@@ -109,6 +110,22 @@ export class DatabaseStorage implements IStorage {
   async updateThought(id: number, data: Partial<InsertThought>): Promise<Thought | undefined> {
     const [updated] = await db.update(thoughts).set(data).where(eq(thoughts.id, id)).returning();
     return updated;
+  }
+
+  async getGlobalThoughtFeed(limit = 20): Promise<Array<Thought & { userName?: string }>> {
+    const results = await db.select({
+      thought: thoughts,
+      userName: users.firstName,
+    })
+    .from(thoughts)
+    .leftJoin(users, eq(thoughts.userId, users.id))
+    .orderBy(desc(thoughts.createdAt))
+    .limit(limit);
+    
+    return results.map(r => ({
+      ...r.thought,
+      userName: r.userName || "Anonymous",
+    }));
   }
 
   // ============ PROMPT VERSIONS ============

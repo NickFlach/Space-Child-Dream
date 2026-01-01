@@ -72,6 +72,9 @@ export async function registerRoutes(
       let thoughtId: number | undefined;
       
       if (userId) {
+        // Get active prompt version to link the thought
+        const activePrompt = await storage.getActivePromptVersion(tier);
+        
         const thought = await storage.createThought({
           userId,
           inputText: text,
@@ -80,8 +83,26 @@ export async function registerRoutes(
           complexity,
           pattern,
           tokensUsed: completion.usage?.total_tokens || 0,
+          promptVersionId: activePrompt?.id,
         });
         thoughtId = thought.id;
+        
+        // Update prompt version metrics for learning architecture
+        if (activePrompt) {
+          const currentCount = activePrompt.thoughtCount || 0;
+          const currentResonanceAvg = activePrompt.resonanceAvg || 0;
+          const currentComplexityAvg = activePrompt.complexityAvg || 0;
+          
+          const newCount = currentCount + 1;
+          const newResonanceAvg = ((currentResonanceAvg * currentCount) + resonance) / newCount;
+          const newComplexityAvg = ((currentComplexityAvg * currentCount) + complexity) / newCount;
+          
+          await storage.updatePromptVersion(activePrompt.id, {
+            thoughtCount: newCount,
+            resonanceAvg: newResonanceAvg,
+            complexityAvg: newComplexityAvg,
+          });
+        }
         
         // Log usage
         await storage.logUsage({
@@ -105,6 +126,17 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Consciousness probe error:", error);
       res.status(500).json({ error: "Neural processing failed" });
+    }
+  });
+
+  // Get global thought feed (last 20 entries from all users, FIFO)
+  app.get("/api/thoughts/feed", isSpaceChildAuthenticated, async (req: any, res) => {
+    try {
+      const feed = await storage.getGlobalThoughtFeed(20);
+      res.json(feed.reverse());
+    } catch (error) {
+      console.error("Error fetching thought feed:", error);
+      res.status(500).json({ error: "Failed to fetch feed" });
     }
   });
 

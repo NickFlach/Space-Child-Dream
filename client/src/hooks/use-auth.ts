@@ -124,6 +124,7 @@ export function useAuth() {
     onSuccess: (data) => {
       setTokens({ accessToken: data.accessToken, refreshToken: data.refreshToken });
       queryClient.setQueryData(["auth-user", data.accessToken], data.user);
+      queryClient.invalidateQueries({ queryKey: ["auth-user"] });
     },
   });
 
@@ -132,6 +133,7 @@ export function useAuth() {
     onSuccess: (data) => {
       setTokens({ accessToken: data.accessToken, refreshToken: data.refreshToken });
       queryClient.setQueryData(["auth-user", data.accessToken], data.user);
+      queryClient.invalidateQueries({ queryKey: ["auth-user"] });
     },
   });
 
