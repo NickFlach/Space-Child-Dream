@@ -153,16 +153,18 @@ export function ConsciousnessProbe() {
         </div>
 
         {/* Main Canvas */}
-        <div className="relative z-10 flex-1 flex items-center justify-center p-8">
-            <AnimatePresence mode="wait">
-                {probeMutation.isPending ? (
-                    <ProcessingState key="processing" />
-                ) : activeThought ? (
-                    <ResonanceVisualizer key={activeThought.id} thought={activeThought} />
-                ) : (
-                    <EmptyState key="empty" />
-                )}
-            </AnimatePresence>
+        <div className="relative z-10 flex-1 flex flex-col p-8 overflow-hidden">
+            <ScrollArea className="flex-1">
+                <AnimatePresence mode="wait">
+                    {probeMutation.isPending ? (
+                        <ProcessingState key="processing" />
+                    ) : activeThought ? (
+                        <ResonanceVisualizer key={activeThought.id} thought={activeThought} />
+                    ) : (
+                        <EmptyState key="empty" />
+                    )}
+                </AnimatePresence>
+            </ScrollArea>
         </div>
       </Card>
     </div>
