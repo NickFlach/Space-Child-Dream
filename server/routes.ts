@@ -26,7 +26,7 @@ export async function registerRoutes(
   registerImageRoutes(app);
 
   // Consciousness Probe API - the core functionality (now with adaptive prompts and rate limiting)
-  app.post("/api/consciousness/probe", checkDailyLimit, async (req, res) => {
+  app.post("/api/consciousness/probe", isSpaceChildAuthenticated, checkDailyLimit, async (req, res) => {
     try {
       const { text } = req.body;
 
@@ -84,6 +84,7 @@ export async function registerRoutes(
           pattern,
           tokensUsed: completion.usage?.total_tokens || 0,
           promptVersionId: activePrompt?.id,
+          isPublic: true,
         });
         thoughtId = thought.id;
         
