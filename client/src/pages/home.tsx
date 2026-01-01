@@ -6,23 +6,18 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { ExternalLink, ChevronDown, Activity, Zap, Shield, GitBranch } from "lucide-react";
+import { ImmersiveBackground } from "@/components/immersive-background";
 import generatedImage from '@assets/generated_images/abstract_ethereal_space_neural_network_background.png';
 
 export default function HomePage() {
   return (
-    <ScrollArea className="h-screen w-full bg-background/50">
+    <ScrollArea className="h-screen w-full bg-transparent">
+      
+      <ImmersiveBackground imageSrc={generatedImage} />
       
       {/* Hero Section */}
       <section className="relative h-screen flex flex-col items-center justify-center overflow-hidden">
-        {/* Dynamic Background */}
-        <div className="absolute inset-0 z-0">
-          <img 
-            src={generatedImage} 
-            alt="Space Background" 
-            className="w-full h-full object-cover opacity-60"
-          />
-          <div className="absolute inset-0 bg-gradient-to-b from-background/20 via-background/60 to-background" />
-        </div>
+        {/* Dynamic Background Removed (Moved to ImmersiveBackground) */}
 
         <motion.div 
           className="relative z-10 text-center px-4 max-w-4xl"
