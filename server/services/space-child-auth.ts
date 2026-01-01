@@ -3,11 +3,14 @@ import jwt from "jsonwebtoken";
 import { v4 as uuidv4 } from "uuid";
 import { buildPoseidon } from "circomlibjs";
 import { storage } from "../storage";
+import { sendVerificationEmail, sendPasswordResetEmail, sendWelcomeEmail } from "./email";
 import type { User, ZkCredential, ProofSession } from "@shared/models/auth";
 
 const JWT_ISSUER = "space-child-auth";
 const ACCESS_TOKEN_EXPIRY = "15m";
 const REFRESH_TOKEN_EXPIRY = "7d";
+const EMAIL_VERIFICATION_EXPIRY = 24 * 60 * 60 * 1000; // 24 hours
+const PASSWORD_RESET_EXPIRY = 15 * 60 * 1000; // 15 minutes
 
 const envSecret = process.env.SESSION_SECRET;
 if (!envSecret) {
@@ -98,7 +101,7 @@ export class SpaceChildAuthService {
     password: string,
     firstName?: string,
     lastName?: string
-  ): Promise<AuthResult> {
+  ): Promise<AuthResult & { requiresVerification?: boolean }> {
     try {
       const existingUser = await storage.getUserByEmail(email);
       if (existingUser) {
@@ -116,6 +119,7 @@ export class SpaceChildAuthService {
         lastName: lastName || null,
         passwordHash,
         zkCredentialHash: credentialHash,
+        isEmailVerified: false,
       });
 
       await storage.createZkCredential({
@@ -126,13 +130,21 @@ export class SpaceChildAuthService {
         expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
       });
 
-      const { accessToken, refreshToken } = await this.generateTokens(user);
+      // Generate verification token and send email
+      const verificationToken = uuidv4();
+      const tokenHash = await this.hashPassword(verificationToken);
+      await storage.createEmailVerificationToken({
+        userId: user.id,
+        tokenHash,
+        expiresAt: new Date(Date.now() + EMAIL_VERIFICATION_EXPIRY),
+      });
+
+      await sendVerificationEmail(email, verificationToken, firstName);
 
       return {
         success: true,
         user,
-        accessToken,
-        refreshToken,
+        requiresVerification: true,
       };
     } catch (error: any) {
       console.error("Registration error:", error);
@@ -140,7 +152,7 @@ export class SpaceChildAuthService {
     }
   }
 
-  async login(email: string, password: string): Promise<AuthResult> {
+  async login(email: string, password: string): Promise<AuthResult & { requiresVerification?: boolean }> {
     try {
       const user = await storage.getUserByEmail(email);
       if (!user) {
@@ -154,6 +166,16 @@ export class SpaceChildAuthService {
       const isValid = await this.verifyPassword(password, user.passwordHash);
       if (!isValid) {
         return { success: false, error: "Invalid email or password" };
+      }
+
+      // Block login for unverified users
+      if (!user.isEmailVerified) {
+        return { 
+          success: false, 
+          error: "Please verify your email before logging in. Check your inbox for the verification link.",
+          requiresVerification: true,
+          user,
+        };
       }
 
       await storage.updateUser(user.id, { lastLoginAt: new Date() });
@@ -365,6 +387,207 @@ export class SpaceChildAuthService {
         },
       ],
     };
+  }
+
+  // Email verification
+  async verifyEmail(token: string): Promise<AuthResult> {
+    try {
+      // Find all users with pending verification tokens
+      const users = await storage.getUserByEmail(""); // We need to find by token
+      // Since we can't query by token directly, we need to iterate through users
+      // This is a simplified implementation - in production, you'd want to index tokens
+      
+      // For now, we decode the token to find the user via a different approach
+      // Actually, let's use a different strategy - store the plaintext token temporarily
+      // and match against the hash
+      
+      // This requires us to find a way to look up tokens - let's query all active tokens
+      // and check each one. In a real app, you'd want better indexing.
+      
+      // Simplified approach: try to find matching token for any user
+      const allUsers = await this.findUserByVerificationToken(token);
+      if (!allUsers) {
+        return { success: false, error: "Invalid or expired verification link" };
+      }
+
+      const { user, tokenRecord } = allUsers;
+
+      // Mark email as verified
+      await storage.updateUser(user.id, { isEmailVerified: true });
+      await storage.consumeEmailVerificationToken(tokenRecord.id);
+
+      // Send welcome email
+      await sendWelcomeEmail(user.email!, user.firstName || undefined);
+
+      // Generate tokens so user is logged in after verification
+      const { accessToken, refreshToken } = await this.generateTokens(user);
+
+      return {
+        success: true,
+        user: { ...user, isEmailVerified: true },
+        accessToken,
+        refreshToken,
+      };
+    } catch (error: any) {
+      console.error("Email verification error:", error);
+      return { success: false, error: error.message || "Verification failed" };
+    }
+  }
+
+  private async findUserByVerificationToken(token: string): Promise<{ user: User; tokenRecord: any } | null> {
+    // Get all users and check their verification tokens
+    // In production, this should be optimized with proper token indexing
+    const db = await import("../db").then(m => m.db);
+    const { emailVerificationTokens, users } = await import("@shared/models/auth");
+    const { sql, gte, and } = await import("drizzle-orm");
+    
+    const tokens = await db.select()
+      .from(emailVerificationTokens)
+      .where(and(
+        sql`${emailVerificationTokens.consumedAt} IS NULL`,
+        gte(emailVerificationTokens.expiresAt, new Date())
+      ));
+
+    for (const tokenRecord of tokens) {
+      const isMatch = await this.verifyPassword(token, tokenRecord.tokenHash);
+      if (isMatch) {
+        const user = await storage.getUser(tokenRecord.userId);
+        if (user) {
+          return { user, tokenRecord };
+        }
+      }
+    }
+    return null;
+  }
+
+  async resendVerificationEmail(email: string): Promise<{ success: boolean; error?: string }> {
+    try {
+      const user = await storage.getUserByEmail(email);
+      if (!user) {
+        // Don't reveal if user exists
+        return { success: true };
+      }
+
+      if (user.isEmailVerified) {
+        return { success: false, error: "Email is already verified" };
+      }
+
+      // Invalidate old tokens
+      await storage.invalidateUserVerificationTokens(user.id);
+
+      // Generate new token
+      const verificationToken = uuidv4();
+      const tokenHash = await this.hashPassword(verificationToken);
+      await storage.createEmailVerificationToken({
+        userId: user.id,
+        tokenHash,
+        expiresAt: new Date(Date.now() + EMAIL_VERIFICATION_EXPIRY),
+      });
+
+      await sendVerificationEmail(email, verificationToken, user.firstName || undefined);
+
+      return { success: true };
+    } catch (error: any) {
+      console.error("Resend verification error:", error);
+      return { success: false, error: error.message || "Failed to resend verification" };
+    }
+  }
+
+  async requestPasswordReset(email: string): Promise<{ success: boolean; error?: string }> {
+    try {
+      const user = await storage.getUserByEmail(email);
+      if (!user) {
+        // Don't reveal if user exists - always return success
+        return { success: true };
+      }
+
+      // Invalidate old reset tokens
+      await storage.invalidateUserPasswordResetTokens(user.id);
+
+      // Generate new token
+      const resetToken = uuidv4();
+      const tokenHash = await this.hashPassword(resetToken);
+      await storage.createPasswordResetToken({
+        userId: user.id,
+        tokenHash,
+        expiresAt: new Date(Date.now() + PASSWORD_RESET_EXPIRY),
+      });
+
+      await sendPasswordResetEmail(email, resetToken, user.firstName || undefined);
+
+      return { success: true };
+    } catch (error: any) {
+      console.error("Password reset request error:", error);
+      return { success: false, error: error.message || "Failed to send reset email" };
+    }
+  }
+
+  async resetPassword(token: string, newPassword: string): Promise<AuthResult> {
+    try {
+      if (newPassword.length < 8) {
+        return { success: false, error: "Password must be at least 8 characters" };
+      }
+
+      // Find user by reset token
+      const result = await this.findUserByResetToken(token);
+      if (!result) {
+        return { success: false, error: "Invalid or expired reset link" };
+      }
+
+      const { user, tokenRecord } = result;
+
+      // Update password
+      const passwordHash = await this.hashPassword(newPassword);
+      await storage.updateUser(user.id, { passwordHash });
+
+      // Consume the token
+      await storage.consumePasswordResetToken(tokenRecord.id);
+
+      // Revoke all existing refresh tokens for security
+      await storage.revokeAllUserRefreshTokens(user.id);
+
+      // If email wasn't verified, verify it now (they clicked a valid email link)
+      if (!user.isEmailVerified) {
+        await storage.updateUser(user.id, { isEmailVerified: true });
+      }
+
+      // Generate new tokens so user is logged in
+      const { accessToken, refreshToken } = await this.generateTokens(user);
+
+      return {
+        success: true,
+        user,
+        accessToken,
+        refreshToken,
+      };
+    } catch (error: any) {
+      console.error("Password reset error:", error);
+      return { success: false, error: error.message || "Password reset failed" };
+    }
+  }
+
+  private async findUserByResetToken(token: string): Promise<{ user: User; tokenRecord: any } | null> {
+    const db = await import("../db").then(m => m.db);
+    const { passwordResetTokens } = await import("@shared/models/auth");
+    const { sql, gte, and } = await import("drizzle-orm");
+    
+    const tokens = await db.select()
+      .from(passwordResetTokens)
+      .where(and(
+        sql`${passwordResetTokens.consumedAt} IS NULL`,
+        gte(passwordResetTokens.expiresAt, new Date())
+      ));
+
+    for (const tokenRecord of tokens) {
+      const isMatch = await this.verifyPassword(token, tokenRecord.tokenHash);
+      if (isMatch) {
+        const user = await storage.getUser(tokenRecord.userId);
+        if (user) {
+          return { user, tokenRecord };
+        }
+      }
+    }
+    return null;
   }
 }
 

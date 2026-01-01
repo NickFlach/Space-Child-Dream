@@ -61,6 +61,7 @@ export function registerSpaceChildAuthRoutes(app: Express) {
         return res.status(400).json({ error: result.error });
       }
 
+      // Registration now requires email verification
       res.json({
         user: {
           id: result.user?.id,
@@ -68,8 +69,8 @@ export function registerSpaceChildAuthRoutes(app: Express) {
           firstName: result.user?.firstName,
           lastName: result.user?.lastName,
         },
-        accessToken: result.accessToken,
-        refreshToken: result.refreshToken,
+        requiresVerification: result.requiresVerification,
+        message: "Please check your email to verify your account before logging in.",
       });
     } catch (error: any) {
       console.error("Registration error:", error);
@@ -88,7 +89,10 @@ export function registerSpaceChildAuthRoutes(app: Express) {
       const result = await spaceChildAuth.login(email, password);
 
       if (!result.success) {
-        return res.status(401).json({ error: result.error });
+        return res.status(401).json({ 
+          error: result.error,
+          requiresVerification: result.requiresVerification,
+        });
       }
 
       res.json({
@@ -104,6 +108,117 @@ export function registerSpaceChildAuthRoutes(app: Express) {
     } catch (error: any) {
       console.error("Login error:", error);
       res.status(500).json({ error: "Login failed" });
+    }
+  });
+
+  // Email verification
+  app.post("/api/space-child-auth/verify-email", async (req: Request, res: Response) => {
+    try {
+      const { token } = req.body;
+      if (!token) {
+        return res.status(400).json({ error: "Verification token required" });
+      }
+
+      const result = await spaceChildAuth.verifyEmail(token);
+
+      if (!result.success) {
+        return res.status(400).json({ error: result.error });
+      }
+
+      res.json({
+        user: {
+          id: result.user?.id,
+          email: result.user?.email,
+          firstName: result.user?.firstName,
+          lastName: result.user?.lastName,
+        },
+        accessToken: result.accessToken,
+        refreshToken: result.refreshToken,
+        message: "Email verified successfully! Welcome to Space Child Dream.",
+      });
+    } catch (error: any) {
+      console.error("Email verification error:", error);
+      res.status(500).json({ error: "Verification failed" });
+    }
+  });
+
+  // Resend verification email
+  app.post("/api/space-child-auth/resend-verification", async (req: Request, res: Response) => {
+    try {
+      const { email } = req.body;
+      if (!email) {
+        return res.status(400).json({ error: "Email required" });
+      }
+
+      const result = await spaceChildAuth.resendVerificationEmail(email);
+
+      if (!result.success) {
+        return res.status(400).json({ error: result.error });
+      }
+
+      res.json({
+        success: true,
+        message: "If an account exists with this email, a verification link has been sent.",
+      });
+    } catch (error: any) {
+      console.error("Resend verification error:", error);
+      res.status(500).json({ error: "Failed to resend verification" });
+    }
+  });
+
+  // Forgot password
+  app.post("/api/space-child-auth/forgot-password", async (req: Request, res: Response) => {
+    try {
+      const { email } = req.body;
+      if (!email) {
+        return res.status(400).json({ error: "Email required" });
+      }
+
+      const result = await spaceChildAuth.requestPasswordReset(email);
+
+      // Always return success to not reveal if user exists
+      res.json({
+        success: true,
+        message: "If an account exists with this email, a password reset link has been sent.",
+      });
+    } catch (error: any) {
+      console.error("Forgot password error:", error);
+      res.status(500).json({ error: "Failed to process request" });
+    }
+  });
+
+  // Reset password
+  app.post("/api/space-child-auth/reset-password", async (req: Request, res: Response) => {
+    try {
+      const { token, password } = req.body;
+      if (!token || !password) {
+        return res.status(400).json({ error: "Token and password required" });
+      }
+
+      if (password.length < 8) {
+        return res.status(400).json({ error: "Password must be at least 8 characters" });
+      }
+
+      const result = await spaceChildAuth.resetPassword(token, password);
+
+      if (!result.success) {
+        return res.status(400).json({ error: result.error });
+      }
+
+      res.json({
+        user: {
+          id: result.user?.id,
+          email: result.user?.email,
+          firstName: result.user?.firstName,
+          lastName: result.user?.lastName,
+        },
+        accessToken: result.accessToken,
+        refreshToken: result.refreshToken,
+        message: "Password reset successfully!",
+      });
+    } catch (error: any) {
+      console.error("Reset password error:", error);
+      res.status(500).json({ error: "Password reset failed" });
     }
   });
 
