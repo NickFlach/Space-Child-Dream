@@ -8,6 +8,13 @@ import {
   type UsageLedger, type InsertUsageLedger,
   type SharedVisualization, type InsertSharedVisualization,
 } from "@shared/schema";
+import {
+  zkCredentials, proofSessions, refreshTokens, subdomainAccess,
+  type ZkCredential, type InsertZkCredential,
+  type ProofSession, type InsertProofSession,
+  type RefreshToken, type InsertRefreshToken,
+  type SubdomainAccess, type InsertSubdomainAccess,
+} from "@shared/models/auth";
 import { eq, desc, and, gte, sql } from "drizzle-orm";
 
 export interface IStorage {
@@ -202,6 +209,89 @@ export class DatabaseStorage implements IStorage {
     await db.update(sharedVisualizations)
       .set({ viewCount: sql`${sharedVisualizations.viewCount} + 1` })
       .where(eq(sharedVisualizations.slug, slug));
+  }
+
+  // ============ SPACE CHILD AUTH - ZK CREDENTIALS ============
+  async getZkCredential(id: number): Promise<ZkCredential | undefined> {
+    const [cred] = await db.select().from(zkCredentials).where(eq(zkCredentials.id, id));
+    return cred;
+  }
+
+  async getZkCredentialsByUser(userId: string): Promise<ZkCredential[]> {
+    return db.select().from(zkCredentials).where(eq(zkCredentials.userId, userId));
+  }
+
+  async getZkCredentialByCommitment(commitment: string): Promise<ZkCredential | undefined> {
+    const [cred] = await db.select().from(zkCredentials).where(eq(zkCredentials.publicCommitment, commitment));
+    return cred;
+  }
+
+  async createZkCredential(credential: InsertZkCredential): Promise<ZkCredential> {
+    const [created] = await db.insert(zkCredentials).values(credential).returning();
+    return created;
+  }
+
+  async revokeZkCredential(id: number): Promise<void> {
+    await db.update(zkCredentials).set({ isRevoked: true }).where(eq(zkCredentials.id, id));
+  }
+
+  // ============ SPACE CHILD AUTH - PROOF SESSIONS ============
+  async getProofSession(sessionId: string): Promise<ProofSession | undefined> {
+    const [session] = await db.select().from(proofSessions).where(eq(proofSessions.sessionId, sessionId));
+    return session;
+  }
+
+  async createProofSession(session: InsertProofSession): Promise<ProofSession> {
+    const [created] = await db.insert(proofSessions).values(session).returning();
+    return created;
+  }
+
+  async updateProofSession(id: number, data: Partial<InsertProofSession>): Promise<ProofSession | undefined> {
+    const [updated] = await db.update(proofSessions).set(data).where(eq(proofSessions.id, id)).returning();
+    return updated;
+  }
+
+  // ============ SPACE CHILD AUTH - REFRESH TOKENS ============
+  async getRefreshToken(tokenHash: string): Promise<RefreshToken | undefined> {
+    const [token] = await db.select().from(refreshTokens).where(eq(refreshTokens.tokenHash, tokenHash));
+    return token;
+  }
+
+  async getRefreshTokensByUser(userId: string): Promise<RefreshToken[]> {
+    return db.select().from(refreshTokens)
+      .where(eq(refreshTokens.userId, userId))
+      .orderBy(desc(refreshTokens.createdAt));
+  }
+
+  async createRefreshToken(token: InsertRefreshToken): Promise<RefreshToken> {
+    const [created] = await db.insert(refreshTokens).values(token).returning();
+    return created;
+  }
+
+  async revokeRefreshToken(id: number): Promise<void> {
+    await db.update(refreshTokens).set({ isRevoked: true }).where(eq(refreshTokens.id, id));
+  }
+
+  async revokeAllUserRefreshTokens(userId: string): Promise<void> {
+    await db.update(refreshTokens).set({ isRevoked: true }).where(eq(refreshTokens.userId, userId));
+  }
+
+  // ============ SPACE CHILD AUTH - SUBDOMAIN ACCESS ============
+  async getSubdomainAccess(userId: string, subdomain: string): Promise<SubdomainAccess | undefined> {
+    const [access] = await db.select().from(subdomainAccess)
+      .where(and(eq(subdomainAccess.userId, userId), eq(subdomainAccess.subdomain, subdomain)));
+    return access;
+  }
+
+  async createSubdomainAccess(access: InsertSubdomainAccess): Promise<SubdomainAccess> {
+    const [created] = await db.insert(subdomainAccess).values(access).returning();
+    return created;
+  }
+
+  async updateSubdomainLastAccess(userId: string, subdomain: string): Promise<void> {
+    await db.update(subdomainAccess)
+      .set({ lastAccessAt: new Date() })
+      .where(and(eq(subdomainAccess.userId, userId), eq(subdomainAccess.subdomain, subdomain)));
   }
 }
 

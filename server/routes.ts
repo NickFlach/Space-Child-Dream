@@ -3,12 +3,11 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { registerChatRoutes } from "./replit_integrations/chat";
 import { registerImageRoutes } from "./replit_integrations/image";
-import { setupAuth, registerAuthRoutes, isAuthenticated } from "./replit_integrations/auth";
+import { registerSpaceChildAuthRoutes, isSpaceChildAuthenticated } from "./space-child-auth-routes";
 import { getActiveSystemPrompt, analyzeThoughtPatterns } from "./services/prompt-evolution";
 import { stripe, createCheckoutSession, createPortalSession, handleWebhookEvent, TIER_PRICES } from "./services/stripe";
 import { checkDailyLimit, requireFeature } from "./middleware/entitlements";
 import OpenAI from "openai";
-import Stripe from "stripe";
 
 const openai = new OpenAI({
   apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
@@ -19,9 +18,8 @@ export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
-  // Setup authentication FIRST (before other routes)
-  await setupAuth(app);
-  registerAuthRoutes(app);
+  // Register Space Child Auth routes (JWT-based, no session middleware needed)
+  registerSpaceChildAuthRoutes(app);
   
   // Register AI integration routes
   registerChatRoutes(app);
@@ -111,7 +109,7 @@ export async function registerRoutes(
   });
 
   // Get user's thought history
-  app.get("/api/thoughts/history", isAuthenticated, async (req: any, res) => {
+  app.get("/api/thoughts/history", isSpaceChildAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const thoughts = await storage.getThoughtsByUser(userId, 50);
@@ -123,7 +121,7 @@ export async function registerRoutes(
   });
 
   // Get user's usage stats
-  app.get("/api/usage/stats", isAuthenticated, async (req: any, res) => {
+  app.get("/api/usage/stats", isSpaceChildAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const dailyProbes = await storage.getUserDailyUsage(userId);
@@ -154,7 +152,7 @@ export async function registerRoutes(
   });
 
   // Create checkout session for subscription
-  app.post("/api/billing/checkout", isAuthenticated, async (req: any, res) => {
+  app.post("/api/billing/checkout", isSpaceChildAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const { tier, returnUrl } = req.body;
@@ -178,7 +176,7 @@ export async function registerRoutes(
   });
 
   // Create customer portal session
-  app.post("/api/billing/portal", isAuthenticated, async (req: any, res) => {
+  app.post("/api/billing/portal", isSpaceChildAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const { returnUrl } = req.body;
@@ -199,7 +197,7 @@ export async function registerRoutes(
   // ============ SHARING ROUTES ============
   
   // Create a shareable link for a thought
-  app.post("/api/thoughts/:id/share", isAuthenticated, async (req: any, res) => {
+  app.post("/api/thoughts/:id/share", isSpaceChildAuthenticated, async (req: any, res) => {
     try {
       const thoughtId = parseInt(req.params.id);
       const userId = req.user.claims.sub;

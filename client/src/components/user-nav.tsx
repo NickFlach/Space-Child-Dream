@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
@@ -10,10 +11,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { User, Settings, LogOut, Sparkles, CreditCard } from "lucide-react";
+import { User, LogOut, Sparkles, CreditCard, Shield } from "lucide-react";
+import { AuthModal } from "./auth-modal";
 
 export function UserNav() {
   const { user, isLoading, isAuthenticated, logout } = useAuth();
+  const [authModalOpen, setAuthModalOpen] = useState(false);
 
   if (isLoading) {
     return (
@@ -23,14 +26,17 @@ export function UserNav() {
 
   if (!isAuthenticated) {
     return (
-      <Button 
-        onClick={() => window.location.href = "/api/login"}
-        className="bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-600 hover:to-purple-600"
-        data-testid="button-nav-login"
-      >
-        <Sparkles className="w-4 h-4 mr-2" />
-        Sign In
-      </Button>
+      <>
+        <Button 
+          onClick={() => setAuthModalOpen(true)}
+          className="bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-600 hover:to-purple-600"
+          data-testid="button-nav-login"
+        >
+          <Sparkles className="w-4 h-4 mr-2" />
+          Sign In
+        </Button>
+        <AuthModal open={authModalOpen} onOpenChange={setAuthModalOpen} />
+      </>
     );
   }
 
@@ -55,6 +61,10 @@ export function UserNav() {
             <p className="text-xs text-gray-400" data-testid="text-menu-email">
               {user?.email}
             </p>
+            <div className="flex items-center gap-1 mt-1">
+              <Shield className="w-3 h-3 text-cyan-400" />
+              <span className="text-xs text-cyan-400">Space Child Auth</span>
+            </div>
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator className="bg-white/10" />

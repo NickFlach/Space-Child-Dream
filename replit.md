@@ -5,10 +5,15 @@ Space Child Dream is a consciousness exploration platform based on the mHC (Mani
 
 ## Recent Changes (January 2026)
 
-### Authentication & Users
-- Integrated Replit Auth for user signup/login (supports Google, GitHub, Apple, email)
-- User sessions stored in PostgreSQL via connect-pg-simple
-- User profile includes first/last name, email, profile image
+### Space Child Auth (NEW - Replaces Replit Auth)
+- Custom authentication system with ZKP (zero-knowledge proof) foundation
+- JWT-based authentication with access/refresh token rotation
+- Password hashing using bcrypt (12 rounds)
+- ZK credentials generated using circomlibjs (Poseidon hashing)
+- Cross-subdomain SSO support with JWKS endpoint
+- Token refresh with rotation and revocation
+- Frontend auth modal with login/register forms
+- Located in `server/services/space-child-auth.ts` and `server/space-child-auth-routes.ts`
 
 ### Account Management
 - Account page at `/account` with tabs: Profile, Usage, History, Subscription
@@ -51,20 +56,25 @@ Space Child Dream is a consciousness exploration platform based on the mHC (Mani
 
 ### Frontend (React + Vite)
 - `client/src/pages/` - Page components (home, account, share)
-- `client/src/components/` - Reusable UI components
+- `client/src/components/` - Reusable UI components (auth-modal, user-nav)
 - `client/src/hooks/` - Custom React hooks (use-auth, use-toast)
 - `client/src/lib/` - Utilities (queryClient, auth-utils)
 
 ### Backend (Express + TypeScript)
 - `server/routes.ts` - API route definitions
 - `server/storage.ts` - Database operations via Drizzle ORM
-- `server/services/` - Business logic (stripe, prompt-evolution)
+- `server/services/` - Business logic (space-child-auth, stripe, prompt-evolution)
+- `server/space-child-auth-routes.ts` - Space Child Auth API routes
 - `server/middleware/` - Express middleware (entitlements)
-- `server/replit_integrations/` - Replit Auth, Chat, Image integrations
+- `server/replit_integrations/` - Chat and Image AI integrations
 
 ### Database (PostgreSQL)
-- `users` - User accounts (Replit Auth)
-- `sessions` - Session storage
+- `users` - User accounts with password hash and ZK credentials
+- `zk_credentials` - Zero-knowledge proof credentials
+- `proof_sessions` - ZKP authentication sessions
+- `refresh_tokens` - JWT refresh token storage with revocation
+- `subdomain_access` - Cross-subdomain access records
+- `sessions` - Legacy session storage (kept for compatibility)
 - `thoughts` - Consciousness probe results
 - `prompt_versions` - Evolving system prompts
 - `subscriptions` - Stripe subscription data
@@ -73,12 +83,12 @@ Space Child Dream is a consciousness exploration platform based on the mHC (Mani
 
 ### Schema Location
 - `shared/schema.ts` - Drizzle schema definitions
-- `shared/models/auth.ts` - Auth-related tables (users, sessions)
+- `shared/models/auth.ts` - Auth-related tables (users, zk_credentials, proof_sessions, refresh_tokens)
 
 ## Environment Variables
 
 ### Required for Authentication
-- `SESSION_SECRET` - Session encryption key (auto-provided by Replit)
+- `SESSION_SECRET` - JWT signing key (auto-provided by Replit)
 
 ### Required for AI Features
 - `AI_INTEGRATIONS_OPENAI_API_KEY` - OpenAI API key
@@ -102,6 +112,18 @@ npm run db:push  # Push schema changes to database
 ```
 
 ## Key Endpoints
+
+### Space Child Auth
+- `POST /api/space-child-auth/register` - Create new account
+- `POST /api/space-child-auth/login` - Login with email/password
+- `POST /api/space-child-auth/refresh` - Refresh access token
+- `GET /api/space-child-auth/user` - Get current user (requires Bearer token)
+- `POST /api/space-child-auth/logout` - Logout and revoke tokens
+- `GET /api/space-child-auth/.well-known/jwks.json` - JWKS endpoint for cross-domain verification
+- `POST /api/space-child-auth/zk/request` - Create ZKP auth session
+- `POST /api/space-child-auth/zk/verify` - Verify ZKP and authenticate
+
+### Application
 - `POST /api/consciousness/probe` - Generate consciousness probe (rate-limited)
 - `GET /api/thoughts/history` - User's thought history (authenticated)
 - `GET /api/usage/stats` - User usage statistics (authenticated)
@@ -109,3 +131,8 @@ npm run db:push  # Push schema changes to database
 - `POST /api/billing/portal` - Create Stripe customer portal session
 - `POST /api/thoughts/:id/share` - Share a thought publicly
 - `GET /api/share/:slug` - Get shared thought data
+
+## Future Enhancements
+- Integration with Google's longfellow-zk library for production ZKP
+- Wallet-based authentication using ZKP credentials
+- Complete proof session verification flow
