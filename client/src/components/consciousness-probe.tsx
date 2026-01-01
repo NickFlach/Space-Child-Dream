@@ -1,15 +1,17 @@
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Brain, Sparkles, Save, Trash2, Share2, Activity, Fingerprint } from "lucide-react";
+import { Brain, Sparkles, Save, Share2, Activity, Fingerprint } from "lucide-react";
 import { GlitchText } from "./glitch-text";
+import { useMutation } from "@tanstack/react-query";
 
 interface Thought {
   id: string;
   text: string;
+  reflection: string;
   timestamp: number;
   resonance: number;
   complexity: number;
@@ -18,32 +20,29 @@ interface Thought {
 
 export function ConsciousnessProbe() {
   const [input, setInput] = useState("");
-  const [isProcessing, setIsProcessing] = useState(false);
   const [thoughts, setThoughts] = useState<Thought[]>([]);
   const [activeThought, setActiveThought] = useState<Thought | null>(null);
-  
-  // Simulated processing
+
+  const probeMutation = useMutation({
+    mutationFn: async (text: string) => {
+      const response = await fetch("/api/consciousness/probe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text }),
+      });
+      if (!response.ok) throw new Error("Failed to process thought");
+      return response.json();
+    },
+    onSuccess: (data: Thought) => {
+      setThoughts(prev => [data, ...prev]);
+      setActiveThought(data);
+      setInput("");
+    },
+  });
+
   const processThought = () => {
     if (!input.trim()) return;
-    
-    setIsProcessing(true);
-    
-    // Simulate network delay and processing
-    setTimeout(() => {
-      const newThought: Thought = {
-        id: Math.random().toString(36).substring(7),
-        text: input,
-        timestamp: Date.now(),
-        resonance: Math.random() * 100,
-        complexity: Math.random() * 100,
-        pattern: Array.from({ length: 20 }, () => Math.random()) // Feature vector
-      };
-      
-      setThoughts(prev => [newThought, ...prev]);
-      setActiveThought(newThought);
-      setInput("");
-      setIsProcessing(false);
-    }, 1500);
+    probeMutation.mutate(input);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -63,7 +62,7 @@ export function ConsciousnessProbe() {
              Neural Interface
            </h3>
            <p className="text-xs text-gray-400 font-mono">
-             Inject simulated concepts into the mHC manifold.
+             Inject concepts into the mHC manifold.
            </p>
         </div>
 
@@ -74,15 +73,17 @@ export function ConsciousnessProbe() {
             onKeyDown={handleKeyDown}
             placeholder="Enter a thought or concept..."
             className="bg-black/50 border-white/20 text-white placeholder:text-white/20 font-mono focus:border-cyan-500/50"
-            disabled={isProcessing}
+            disabled={probeMutation.isPending}
+            data-testid="input-consciousness"
           />
           <Button 
             onClick={processThought}
-            disabled={!input.trim() || isProcessing}
+            disabled={!input.trim() || probeMutation.isPending}
             className="absolute right-1 top-1 h-8 bg-cyan-500/20 hover:bg-cyan-500/40 text-cyan-300 border border-cyan-500/50"
             size="sm"
+            data-testid="button-probe"
           >
-            {isProcessing ? <Activity className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+            {probeMutation.isPending ? <Activity className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
           </Button>
         </div>
 
@@ -102,6 +103,7 @@ export function ConsciousnessProbe() {
                                 ? "bg-cyan-500/10 border-cyan-500/50 text-cyan-300" 
                                 : "bg-white/5 border-transparent hover:bg-white/10 text-gray-400"
                             }`}
+                            data-testid={`thought-${t.id}`}
                         >
                             <span className="truncate max-w-[150px]">{t.text}</span>
                             <span className="opacity-50 group-hover:opacity-100">{Math.round(t.resonance)}%</span>
@@ -153,7 +155,7 @@ export function ConsciousnessProbe() {
         {/* Main Canvas */}
         <div className="relative z-10 flex-1 flex items-center justify-center p-8">
             <AnimatePresence mode="wait">
-                {isProcessing ? (
+                {probeMutation.isPending ? (
                     <ProcessingState key="processing" />
                 ) : activeThought ? (
                     <ResonanceVisualizer key={activeThought.id} thought={activeThought} />
@@ -199,12 +201,11 @@ function ProcessingState() {
 }
 
 function ResonanceVisualizer({ thought }: { thought: Thought }) {
-    // Deterministic visual generation based on thought data
     return (
         <motion.div 
             initial={{ opacity: 0, scale: 0.8 }} 
             animate={{ opacity: 1, scale: 1 }} 
-            className="relative w-full h-full flex items-center justify-center"
+            className="relative w-full h-full flex flex-col items-center justify-center gap-6"
         >
             <div className="relative w-[300px] h-[300px]">
                 {/* Core Nucleus */}
@@ -236,15 +237,27 @@ function ResonanceVisualizer({ thought }: { thought: Thought }) {
 
                 {/* Text Overlay */}
                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center">
-                    <h2 className="text-3xl font-display font-bold text-transparent bg-clip-text bg-gradient-to-br from-white to-white/50 blur-[1px]">
+                    <h2 className="text-3xl font-display font-bold text-transparent bg-clip-text bg-gradient-to-br from-white to-white/50 blur-[1px]" data-testid="text-resonance">
                         {Math.round(thought.resonance)}%
                     </h2>
                 </div>
             </div>
             
+            {/* Reflection Text */}
+            <motion.div 
+                className="max-w-md text-center px-6"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+            >
+                <p className="text-sm text-gray-300 italic leading-relaxed" data-testid="text-reflection">
+                    "{thought.reflection}"
+                </p>
+            </motion.div>
+            
             {/* Analysis Data */}
-            <div className="absolute bottom-0 w-full flex justify-between text-xs font-mono text-gray-500">
-                <div>COMPLEXITY: {(thought.complexity / 10).toFixed(2)}</div>
+            <div className="absolute bottom-0 w-full flex justify-between text-xs font-mono text-gray-500 px-8">
+                <div data-testid="text-complexity">COMPLEXITY: {(thought.complexity / 10).toFixed(2)}</div>
                 <div>HARMONICS: {thought.pattern.filter(p => p > 0.5).length}</div>
             </div>
         </motion.div>
