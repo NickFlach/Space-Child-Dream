@@ -7,6 +7,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { ExternalLink, ChevronDown, Activity, Zap, Shield, GitBranch } from "lucide-react";
 import { ImmersiveBackground } from "@/components/immersive-background";
+import { StabilitySimulator } from "@/components/stability-simulator";
+import { GlitchText } from "@/components/glitch-text";
 import generatedImage from '@assets/generated_images/abstract_ethereal_space_neural_network_background.png';
 
 export default function HomePage() {
@@ -29,7 +31,7 @@ export default function HomePage() {
             Research Prototype
           </Badge>
           <h1 className="text-6xl md:text-8xl font-display font-black text-white mb-6 tracking-tighter drop-shadow-[0_0_30px_rgba(6,182,212,0.5)]">
-            SPACE CHILD <br/> <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-500">DREAM</span>
+            <GlitchText text="SPACE CHILD" /> <br/> <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-500">DREAM</span>
           </h1>
           <p className="text-xl md:text-2xl text-blue-100/70 font-sans max-w-2xl mx-auto leading-relaxed">
             Visualizing <span className="text-white font-medium">Manifold-Constrained Hyper-Connections</span>
@@ -106,6 +108,17 @@ export default function HomePage() {
 
             <ArchitectureViz />
             
+        </section>
+
+        {/* NEW SECTION: Stability Simulator */}
+        <section className="space-y-8">
+             <div className="flex items-center gap-4 mb-8">
+                 <div className="h-px bg-white/10 flex-1" />
+                 <h2 className="text-2xl font-display font-bold text-white/50 tracking-widest uppercase">Live Simulation</h2>
+                 <div className="h-px bg-white/10 flex-1" />
+             </div>
+             
+             <StabilitySimulator />
         </section>
 
         {/* Key Features Grid */}
