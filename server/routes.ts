@@ -362,22 +362,34 @@ Sitemap: ${baseUrl}/sitemap.xml`);
     });
   });
 
-  // Stripe webhook handler
+  // Stripe webhook handler (uses raw body for signature verification)
   app.post("/api/webhooks/stripe", async (req: Request, res: Response) => {
     if (!stripe) {
       return res.status(400).json({ error: "Stripe not configured" });
     }
     
-    const sig = req.headers["stripe-signature"];
+    const sig = req.headers["stripe-signature"] as string;
     const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
     
-    if (!sig || !endpointSecret) {
-      return res.status(400).json({ error: "Missing signature or secret" });
+    if (!sig) {
+      console.error("Webhook error: Missing stripe-signature header");
+      return res.status(400).json({ error: "Missing signature" });
+    }
+    
+    if (!endpointSecret) {
+      console.error("Webhook error: STRIPE_WEBHOOK_SECRET not configured");
+      return res.status(400).json({ error: "Webhook secret not configured" });
     }
     
     try {
+      // Use rawBody for proper signature verification
+      const rawBody = (req as any).rawBody;
+      if (!rawBody) {
+        return res.status(400).json({ error: "Missing raw body" });
+      }
+      
       const event = stripe.webhooks.constructEvent(
-        req.body,
+        rawBody,
         sig,
         endpointSecret
       );
@@ -385,8 +397,8 @@ Sitemap: ${baseUrl}/sitemap.xml`);
       await handleWebhookEvent(event);
       res.json({ received: true });
     } catch (error: any) {
-      console.error("Webhook error:", error);
-      res.status(400).json({ error: error.message });
+      console.error("Webhook signature verification failed:", error.message);
+      res.status(400).json({ error: "Webhook signature verification failed" });
     }
   });
 
