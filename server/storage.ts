@@ -10,10 +10,13 @@ import {
 } from "@shared/schema";
 import {
   zkCredentials, proofSessions, refreshTokens, subdomainAccess,
+  emailVerificationTokens, passwordResetTokens,
   type ZkCredential, type InsertZkCredential,
   type ProofSession, type InsertProofSession,
   type RefreshToken, type InsertRefreshToken,
   type SubdomainAccess, type InsertSubdomainAccess,
+  type EmailVerificationToken, type InsertEmailVerificationToken,
+  type PasswordResetToken, type InsertPasswordResetToken,
 } from "@shared/models/auth";
 import { eq, desc, and, gte, sql } from "drizzle-orm";
 
@@ -309,6 +312,66 @@ export class DatabaseStorage implements IStorage {
     await db.update(subdomainAccess)
       .set({ lastAccessAt: new Date() })
       .where(and(eq(subdomainAccess.userId, userId), eq(subdomainAccess.subdomain, subdomain)));
+  }
+
+  // ============ SPACE CHILD AUTH - EMAIL VERIFICATION TOKENS ============
+  async createEmailVerificationToken(token: InsertEmailVerificationToken): Promise<EmailVerificationToken> {
+    const [created] = await db.insert(emailVerificationTokens).values(token).returning();
+    return created;
+  }
+
+  async getEmailVerificationTokenByUser(userId: string): Promise<EmailVerificationToken | undefined> {
+    const [token] = await db.select().from(emailVerificationTokens)
+      .where(and(
+        eq(emailVerificationTokens.userId, userId),
+        sql`${emailVerificationTokens.consumedAt} IS NULL`,
+        gte(emailVerificationTokens.expiresAt, new Date())
+      ))
+      .orderBy(desc(emailVerificationTokens.sentAt))
+      .limit(1);
+    return token;
+  }
+
+  async consumeEmailVerificationToken(id: number): Promise<void> {
+    await db.update(emailVerificationTokens)
+      .set({ consumedAt: new Date() })
+      .where(eq(emailVerificationTokens.id, id));
+  }
+
+  async invalidateUserVerificationTokens(userId: string): Promise<void> {
+    await db.update(emailVerificationTokens)
+      .set({ consumedAt: new Date() })
+      .where(eq(emailVerificationTokens.userId, userId));
+  }
+
+  // ============ SPACE CHILD AUTH - PASSWORD RESET TOKENS ============
+  async createPasswordResetToken(token: InsertPasswordResetToken): Promise<PasswordResetToken> {
+    const [created] = await db.insert(passwordResetTokens).values(token).returning();
+    return created;
+  }
+
+  async getPasswordResetTokenByUser(userId: string): Promise<PasswordResetToken | undefined> {
+    const [token] = await db.select().from(passwordResetTokens)
+      .where(and(
+        eq(passwordResetTokens.userId, userId),
+        sql`${passwordResetTokens.consumedAt} IS NULL`,
+        gte(passwordResetTokens.expiresAt, new Date())
+      ))
+      .orderBy(desc(passwordResetTokens.createdAt))
+      .limit(1);
+    return token;
+  }
+
+  async consumePasswordResetToken(id: number): Promise<void> {
+    await db.update(passwordResetTokens)
+      .set({ consumedAt: new Date() })
+      .where(eq(passwordResetTokens.id, id));
+  }
+
+  async invalidateUserPasswordResetTokens(userId: string): Promise<void> {
+    await db.update(passwordResetTokens)
+      .set({ consumedAt: new Date() })
+      .where(eq(passwordResetTokens.userId, userId));
   }
 }
 
