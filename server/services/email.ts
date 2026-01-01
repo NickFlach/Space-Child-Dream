@@ -53,13 +53,14 @@ export async function sendVerificationEmail(email: string, token: string, firstN
 <head>
   <meta charset="utf-8">
   <style>
-    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0a0a0f; color: #e2e8f0; margin: 0; padding: 20px; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0a0a0f; color: #ffffff; margin: 0; padding: 20px; }
     .container { max-width: 600px; margin: 0 auto; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); border-radius: 16px; padding: 40px; border: 1px solid rgba(255,255,255,0.1); }
-    h1 { color: #22d3ee; margin-bottom: 20px; font-size: 24px; }
-    p { line-height: 1.6; margin-bottom: 16px; }
-    .btn { display: inline-block; background: linear-gradient(135deg, #06b6d4 0%, #a855f7 100%); color: white; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; margin: 20px 0; }
-    .footer { margin-top: 30px; font-size: 12px; color: #64748b; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px; }
-    .highlight { color: #22d3ee; }
+    h1 { color: #22d3ee; margin-bottom: 20px; font-size: 24px; text-shadow: 0 0 20px rgba(34, 211, 238, 0.5); }
+    p { line-height: 1.8; margin-bottom: 16px; color: #ffffff; text-shadow: 0 0 10px rgba(255, 255, 255, 0.3); font-size: 16px; }
+    .btn { display: inline-block; background: linear-gradient(135deg, #06b6d4 0%, #a855f7 100%); color: white; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; margin: 20px 0; box-shadow: 0 0 20px rgba(168, 85, 247, 0.4); }
+    .footer { margin-top: 30px; font-size: 13px; color: #cbd5e1; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px; }
+    .footer p { color: #cbd5e1; text-shadow: none; }
+    .highlight { color: #22d3ee; text-shadow: 0 0 15px rgba(34, 211, 238, 0.6); }
   </style>
 </head>
 <body>
@@ -106,14 +107,15 @@ export async function sendPasswordResetEmail(email: string, token: string, first
 <head>
   <meta charset="utf-8">
   <style>
-    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0a0a0f; color: #e2e8f0; margin: 0; padding: 20px; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0a0a0f; color: #ffffff; margin: 0; padding: 20px; }
     .container { max-width: 600px; margin: 0 auto; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); border-radius: 16px; padding: 40px; border: 1px solid rgba(255,255,255,0.1); }
-    h1 { color: #22d3ee; margin-bottom: 20px; font-size: 24px; }
-    p { line-height: 1.6; margin-bottom: 16px; }
-    .btn { display: inline-block; background: linear-gradient(135deg, #06b6d4 0%, #a855f7 100%); color: white; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; margin: 20px 0; }
-    .footer { margin-top: 30px; font-size: 12px; color: #64748b; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px; }
-    .highlight { color: #22d3ee; }
-    .warning { color: #f59e0b; }
+    h1 { color: #22d3ee; margin-bottom: 20px; font-size: 24px; text-shadow: 0 0 20px rgba(34, 211, 238, 0.5); }
+    p { line-height: 1.8; margin-bottom: 16px; color: #ffffff; text-shadow: 0 0 10px rgba(255, 255, 255, 0.3); font-size: 16px; }
+    .btn { display: inline-block; background: linear-gradient(135deg, #06b6d4 0%, #a855f7 100%); color: white; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; margin: 20px 0; box-shadow: 0 0 20px rgba(168, 85, 247, 0.4); }
+    .footer { margin-top: 30px; font-size: 13px; color: #cbd5e1; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px; }
+    .footer p { color: #cbd5e1; text-shadow: none; }
+    .highlight { color: #22d3ee; text-shadow: 0 0 15px rgba(34, 211, 238, 0.6); }
+    .warning { color: #fbbf24; text-shadow: 0 0 15px rgba(251, 191, 36, 0.5); }
   </style>
 </head>
 <body>
@@ -160,15 +162,17 @@ export async function sendWelcomeEmail(email: string, firstName?: string): Promi
 <head>
   <meta charset="utf-8">
   <style>
-    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0a0a0f; color: #e2e8f0; margin: 0; padding: 20px; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0a0a0f; color: #ffffff; margin: 0; padding: 20px; }
     .container { max-width: 600px; margin: 0 auto; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); border-radius: 16px; padding: 40px; border: 1px solid rgba(255,255,255,0.1); }
-    h1 { color: #22d3ee; margin-bottom: 20px; font-size: 24px; }
-    h2 { color: #a855f7; font-size: 18px; margin-top: 30px; }
-    p { line-height: 1.6; margin-bottom: 16px; }
-    .btn { display: inline-block; background: linear-gradient(135deg, #06b6d4 0%, #a855f7 100%); color: white; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; margin: 20px 0; }
-    .feature { background: rgba(255,255,255,0.05); padding: 16px; border-radius: 8px; margin: 12px 0; border-left: 3px solid #22d3ee; }
-    .footer { margin-top: 30px; font-size: 12px; color: #64748b; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px; }
-    .highlight { color: #22d3ee; }
+    h1 { color: #22d3ee; margin-bottom: 20px; font-size: 24px; text-shadow: 0 0 20px rgba(34, 211, 238, 0.5); }
+    h2 { color: #a855f7; font-size: 18px; margin-top: 30px; text-shadow: 0 0 15px rgba(168, 85, 247, 0.5); }
+    p { line-height: 1.8; margin-bottom: 16px; color: #ffffff; text-shadow: 0 0 10px rgba(255, 255, 255, 0.3); font-size: 16px; }
+    .btn { display: inline-block; background: linear-gradient(135deg, #06b6d4 0%, #a855f7 100%); color: white; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; margin: 20px 0; box-shadow: 0 0 20px rgba(168, 85, 247, 0.4); }
+    .feature { background: rgba(255,255,255,0.08); padding: 16px; border-radius: 8px; margin: 12px 0; border-left: 3px solid #22d3ee; }
+    .feature p { margin-bottom: 0; color: #ffffff; }
+    .footer { margin-top: 30px; font-size: 13px; color: #cbd5e1; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px; }
+    .footer p { color: #cbd5e1; text-shadow: none; }
+    .highlight { color: #22d3ee; text-shadow: 0 0 15px rgba(34, 211, 238, 0.6); }
   </style>
 </head>
 <body>
@@ -182,17 +186,17 @@ export async function sendWelcomeEmail(email: string, firstName?: string): Promi
     
     <div class="feature">
       <strong class="highlight">Consciousness Probes</strong>
-      <p style="margin-bottom: 0;">Share your thoughts and receive poetic AI reflections with resonance and complexity scores that reveal the depth of your exploration.</p>
+      <p>Share your thoughts and receive poetic AI reflections with resonance and complexity scores that reveal the depth of your exploration.</p>
     </div>
     
     <div class="feature">
       <strong class="highlight">Global Consciousness Stream</strong>
-      <p style="margin-bottom: 0;">See how others are exploring consciousness in real-time. Every probe contributes to our collective understanding.</p>
+      <p>See how others are exploring consciousness in real-time. Every probe contributes to our collective understanding.</p>
     </div>
     
     <div class="feature">
       <strong class="highlight">Evolving AI</strong>
-      <p style="margin-bottom: 0;">Our system learns from each interaction, continuously refining its ability to mirror and expand your consciousness explorations.</p>
+      <p>Our system learns from each interaction, continuously refining its ability to mirror and expand your consciousness explorations.</p>
     </div>
     
     <p><a href="${appUrl}" class="btn">Enter the Neural Interface</a></p>
