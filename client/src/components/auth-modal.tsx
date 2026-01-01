@@ -21,6 +21,46 @@ interface AuthModalProps {
 
 type ModalView = "auth" | "verification-pending" | "forgot-password" | "forgot-sent";
 
+const PasswordInput = ({ 
+  id, 
+  value, 
+  onChange, 
+  show, 
+  onToggle,
+  placeholder = "••••••••",
+  testId,
+}: { 
+  id: string; 
+  value: string; 
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  show: boolean;
+  onToggle: () => void;
+  placeholder?: string;
+  testId: string;
+}) => (
+  <div className="relative">
+    <Input
+      id={id}
+      type={show ? "text" : "password"}
+      placeholder={placeholder}
+      value={value}
+      onChange={onChange}
+      className="bg-slate-800 border-white/10 text-white pr-10"
+      required
+      minLength={8}
+      data-testid={testId}
+    />
+    <button
+      type="button"
+      onClick={onToggle}
+      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
+      data-testid={`${testId}-toggle`}
+    >
+      {show ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+    </button>
+  </div>
+);
+
 export function AuthModal({ open, onOpenChange, onForgotPassword }: AuthModalProps) {
   const { login, register, isLoggingIn, isRegistering, loginError, registerError } = useAuth();
   const [view, setView] = useState<ModalView>("auth");
@@ -143,46 +183,6 @@ export function AuthModal({ open, onOpenChange, onForgotPassword }: AuthModalPro
 
   const isLoading = isLoggingIn || isRegistering;
   const displayError = error || loginError || registerError;
-
-  const PasswordInput = ({ 
-    id, 
-    value, 
-    onChange, 
-    show, 
-    onToggle,
-    placeholder = "••••••••",
-    testId,
-  }: { 
-    id: string; 
-    value: string; 
-    onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-    show: boolean;
-    onToggle: () => void;
-    placeholder?: string;
-    testId: string;
-  }) => (
-    <div className="relative">
-      <Input
-        id={id}
-        type={show ? "text" : "password"}
-        placeholder={placeholder}
-        value={value}
-        onChange={onChange}
-        className="bg-slate-800 border-white/10 text-white pr-10"
-        required
-        minLength={8}
-        data-testid={testId}
-      />
-      <button
-        type="button"
-        onClick={onToggle}
-        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
-        data-testid={`${testId}-toggle`}
-      >
-        {show ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-      </button>
-    </div>
-  );
 
   // Verification pending view
   if (view === "verification-pending") {
