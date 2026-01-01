@@ -8,6 +8,7 @@ import { Separator } from "@/components/ui/separator";
 import { ExternalLink, ChevronDown, Activity, Zap, Shield, GitBranch } from "lucide-react";
 import { ImmersiveBackground } from "@/components/immersive-background";
 import { StabilitySimulator } from "@/components/stability-simulator";
+import { ConsciousnessProbe } from "@/components/consciousness-probe";
 import { GlitchText } from "@/components/glitch-text";
 import generatedImage from '@assets/generated_images/abstract_ethereal_space_neural_network_background.png';
 
@@ -119,6 +120,17 @@ export default function HomePage() {
              </div>
              
              <StabilitySimulator />
+        </section>
+
+        {/* NEW SECTION: Consciousness Probe */}
+        <section className="space-y-8">
+             <div className="flex items-center gap-4 mb-8">
+                 <div className="h-px bg-white/10 flex-1" />
+                 <h2 className="text-2xl font-display font-bold text-white/50 tracking-widest uppercase">Consciousness Probe</h2>
+                 <div className="h-px bg-white/10 flex-1" />
+             </div>
+             
+             <ConsciousnessProbe />
         </section>
 
         {/* Key Features Grid */}
