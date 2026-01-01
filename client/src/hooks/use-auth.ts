@@ -67,6 +67,18 @@ interface AuthResponse {
   refreshToken: string;
 }
 
+interface RegisterResponse {
+  user: User;
+  requiresVerification?: boolean;
+  message?: string;
+  accessToken?: string;
+  refreshToken?: string;
+}
+
+interface LoginError extends Error {
+  requiresVerification?: boolean;
+}
+
 async function loginApi(params: LoginParams): Promise<AuthResponse> {
   const response = await fetch("/api/space-child-auth/login", {
     method: "POST",
@@ -75,14 +87,16 @@ async function loginApi(params: LoginParams): Promise<AuthResponse> {
   });
 
   if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error || "Login failed");
+    const errorData = await response.json();
+    const error: LoginError = new Error(errorData.error || "Login failed");
+    error.requiresVerification = errorData.requiresVerification;
+    throw error;
   }
 
   return response.json();
 }
 
-async function registerApi(params: RegisterParams): Promise<AuthResponse> {
+async function registerApi(params: RegisterParams): Promise<RegisterResponse> {
   const response = await fetch("/api/space-child-auth/register", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -131,9 +145,12 @@ export function useAuth() {
   const registerMutation = useMutation({
     mutationFn: registerApi,
     onSuccess: (data) => {
-      setTokens({ accessToken: data.accessToken, refreshToken: data.refreshToken });
-      queryClient.setQueryData(["auth-user", data.accessToken], data.user);
-      queryClient.invalidateQueries({ queryKey: ["auth-user"] });
+      // Only set tokens if they exist (not when verification is required)
+      if (data.accessToken && data.refreshToken) {
+        setTokens({ accessToken: data.accessToken, refreshToken: data.refreshToken });
+        queryClient.setQueryData(["auth-user", data.accessToken], data.user);
+        queryClient.invalidateQueries({ queryKey: ["auth-user"] });
+      }
     },
   });
 
