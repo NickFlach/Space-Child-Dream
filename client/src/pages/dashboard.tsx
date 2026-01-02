@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearch } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -54,7 +55,7 @@ const APP_CATEGORIES: CategoryInfo[] = [
         id: "spacechild-waitlist",
         name: "SpaceChild Waitlist",
         description: "AI-powered art generation and creative exploration",
-        url: "https://spacechild-waitlist.example.com",
+        url: "https://vibe.spacechild.love",
         status: "coming_soon",
       },
     ],
@@ -69,7 +70,7 @@ const APP_CATEGORIES: CategoryInfo[] = [
         id: "spacechild-collective",
         name: "SpaceChild Collective",
         description: "Collaborative research platform for consciousness studies",
-        url: "https://spacechildcollective.example.com",
+        url: "https://research.spacechild.love",
         status: "active",
       },
     ],
@@ -84,7 +85,7 @@ const APP_CATEGORIES: CategoryInfo[] = [
         id: "flaukowski-fashion",
         name: "Flaukowski Fashion",
         description: "AI-curated fashion recommendations and style analysis",
-        url: "https://flaukowskifashion.example.com",
+        url: "https://fashion.spacechild.love",
         status: "active",
       },
     ],
@@ -99,7 +100,7 @@ const APP_CATEGORIES: CategoryInfo[] = [
         id: "space-child-learn",
         name: "Space Child Learn",
         description: "Interactive learning platform with AI tutoring",
-        url: "https://spacechildlearn.example.com",
+        url: "https://u.spacechild.love",
         status: "active",
       },
     ],
@@ -114,7 +115,7 @@ const APP_CATEGORIES: CategoryInfo[] = [
         id: "angel-informant",
         name: "Angel Informant",
         description: "AI-powered investment opportunity discovery",
-        url: "https://angelinformant.example.com",
+        url: "https://angel.spacechild.love",
         status: "active",
       },
     ],
@@ -129,14 +130,14 @@ const APP_CATEGORIES: CategoryInfo[] = [
         id: "ninja-craft-hub",
         name: "Ninja Craft Hub",
         description: "AI-assisted development and project management",
-        url: "https://ninjacrafthub.example.com",
+        url: "https://stealth.spacechild.love",
         status: "active",
       },
       {
         id: "spacechild",
         name: "SpaceChild IDE",
         description: "Intelligent development environment with AI assistance",
-        url: "https://spacechild.example.com",
+        url: "https://ide.spacechild.love",
         status: "active",
       },
     ],
@@ -151,14 +152,14 @@ const APP_CATEGORIES: CategoryInfo[] = [
         id: "cosmic-empathy-core",
         name: "Cosmic Empathy Core",
         description: "Experimental consciousness exploration interface",
-        url: "https://cosmicempathycore.example.com",
+        url: "https://heart.spacechild.love",
         status: "beta",
       },
       {
         id: "flaukowski-mind",
         name: "Flaukowski Mind",
         description: "Advanced neural pattern analysis experiments",
-        url: "https://flaukowskimind.example.com",
+        url: "https://flaukowski.spacechild.love",
         status: "beta",
       },
     ],
@@ -167,8 +168,18 @@ const APP_CATEGORIES: CategoryInfo[] = [
 
 export default function DashboardPage() {
   const { user } = useAuth();
+  const searchString = useSearch();
   const [activeTab, setActiveTab] = useState("apps");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+
+  // Handle tab from URL query param
+  useEffect(() => {
+    const params = new URLSearchParams(searchString);
+    const tab = params.get("tab");
+    if (tab && ["apps", "profile", "subscription", "settings"].includes(tab)) {
+      setActiveTab(tab);
+    }
+  }, [searchString]);
 
   const selectedCategoryData = selectedCategory
     ? APP_CATEGORIES.find((c) => c.id === selectedCategory)

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -16,7 +16,16 @@ import { AuthModal } from "./auth-modal";
 
 export function UserNav() {
   const { user, isLoading, isAuthenticated, logout } = useAuth();
+  const [, navigate] = useLocation();
   const [authModalOpen, setAuthModalOpen] = useState(false);
+
+  const handleLogout = () => {
+    // Clear session storage to reset splash screen state
+    sessionStorage.removeItem("scd_splash_seen");
+    logout();
+    // Navigate to home (beginning)
+    navigate("/");
+  };
 
   if (isLoading) {
     return (
@@ -68,13 +77,13 @@ export function UserNav() {
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator className="bg-white/10" />
-        <Link href="/account">
+        <Link href="/dashboard?tab=profile">
           <DropdownMenuItem className="cursor-pointer text-gray-300 hover:text-white focus:text-white focus:bg-cyan-500/20" data-testid="link-account">
             <User className="mr-2 h-4 w-4" />
-            <span>Account</span>
+            <span>Profile</span>
           </DropdownMenuItem>
         </Link>
-        <Link href="/account?tab=subscription">
+        <Link href="/dashboard?tab=subscription">
           <DropdownMenuItem className="cursor-pointer text-gray-300 hover:text-white focus:text-white focus:bg-cyan-500/20" data-testid="link-subscription">
             <CreditCard className="mr-2 h-4 w-4" />
             <span>Subscription</span>
@@ -83,7 +92,7 @@ export function UserNav() {
         <DropdownMenuSeparator className="bg-white/10" />
         <DropdownMenuItem 
           className="cursor-pointer text-red-400 hover:text-red-300 focus:text-red-300 focus:bg-red-500/20"
-          onClick={() => logout()}
+          onClick={handleLogout}
           data-testid="button-menu-logout"
         >
           <LogOut className="mr-2 h-4 w-4" />
