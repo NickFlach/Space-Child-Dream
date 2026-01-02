@@ -253,7 +253,7 @@ export function AuthModal({ open, onOpenChange, onForgotPassword }: AuthModalPro
         <DialogContent className="sm:max-w-[425px] bg-slate-900 border-white/10">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-white">
-              <img src={logoImage} alt="Space Child" className="w-6 h-6 rounded" />
+              <img src={logoImage} alt="Space Child" className="w-6 h-6 rounded mix-blend-screen" />
               Reset Password
             </DialogTitle>
             <DialogDescription className="text-gray-400">
@@ -357,7 +357,7 @@ export function AuthModal({ open, onOpenChange, onForgotPassword }: AuthModalPro
       <DialogContent className="sm:max-w-[425px] bg-slate-900 border-white/10">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-white">
-            <img src={logoImage} alt="Space Child" className="w-6 h-6 rounded" />
+            <img src={logoImage} alt="Space Child" className="w-6 h-6 rounded mix-blend-screen" />
             Space Child Auth
           </DialogTitle>
           <DialogDescription className="text-gray-400">
@@ -506,7 +506,7 @@ export function AuthModal({ open, onOpenChange, onForgotPassword }: AuthModalPro
                 {isLoading ? (
                   <Loader2 className="w-4 h-4 animate-spin mr-2" />
                 ) : (
-                  <img src={logoImage} alt="" className="w-4 h-4 rounded mr-2" />
+                  <img src={logoImage} alt="" className="w-4 h-4 rounded mr-2 mix-blend-screen" />
                 )}
                 Create Account
               </Button>
