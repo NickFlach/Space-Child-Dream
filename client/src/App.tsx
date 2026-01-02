@@ -11,6 +11,7 @@ import NeuralInterfacePage from "@/pages/neural-interface";
 import PrivacyPage from "@/pages/privacy";
 import TermsPage from "@/pages/terms";
 import { CookieConsent } from "@/components/cookie-consent";
+import { PWAInstallPrompt, OfflineIndicator, UpdateBanner } from "@/components/pwa";
 
 function App() {
   return (
@@ -27,6 +28,9 @@ function App() {
           <Route path="/" component={Home} />
         </Switch>
         <CookieConsent />
+        <PWAInstallPrompt appName="Space Child Dream" />
+        <OfflineIndicator />
+        <UpdateBanner />
       </TooltipProvider>
     </QueryClientProvider>
   );
