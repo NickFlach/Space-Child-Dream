@@ -6,6 +6,8 @@ import { Switch, Route } from "wouter";
 import Home from "@/pages/home";
 import VerifyEmailPage from "@/pages/verify-email";
 import ResetPasswordPage from "@/pages/reset-password";
+import DashboardPage from "@/pages/dashboard";
+import NeuralInterfacePage from "@/pages/neural-interface";
 
 function App() {
   return (
@@ -15,6 +17,8 @@ function App() {
         <Switch>
           <Route path="/verify-email" component={VerifyEmailPage} />
           <Route path="/reset-password" component={ResetPasswordPage} />
+          <Route path="/dashboard" component={DashboardPage} />
+          <Route path="/neural-interface" component={NeuralInterfacePage} />
           <Route path="/" component={Home} />
         </Switch>
       </TooltipProvider>

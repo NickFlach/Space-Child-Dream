@@ -1,7 +1,7 @@
+import { useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 import { ImmersiveBackground } from "@/components/immersive-background";
-import { ConsciousnessProbe } from "@/components/consciousness-probe";
 import { GlitchText } from "@/components/glitch-text";
 import { UserNav } from "@/components/user-nav";
 import { useAuth } from "@/hooks/use-auth";
@@ -9,11 +9,20 @@ import { Button } from "@/components/ui/button";
 import { Sparkles } from "lucide-react";
 import { useState } from "react";
 import { AuthModal } from "@/components/auth-modal";
+import { useLocation } from "wouter";
 import generatedImage from '@assets/generated_images/abstract_ethereal_space_neural_network_background.png';
 
 export default function HomePage() {
   const { isAuthenticated, isLoading } = useAuth();
   const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [, navigate] = useLocation();
+
+  // Redirect authenticated users to neural interface
+  useEffect(() => {
+    if (!isLoading && isAuthenticated) {
+      navigate("/neural-interface");
+    }
+  }, [isAuthenticated, isLoading, navigate]);
 
   return (
     <div className="min-h-screen w-full bg-black relative overflow-hidden">
@@ -39,22 +48,15 @@ export default function HomePage() {
           </motion.div>
         ) : isAuthenticated ? (
           <motion.div
-            key="authenticated"
+            key="redirecting"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="relative z-10 pt-24 pb-12 px-4 min-h-screen"
+            className="h-screen flex items-center justify-center"
           >
-            <div className="max-w-7xl mx-auto">
-              <div className="text-center mb-8">
-                <h1 className="text-4xl md:text-5xl font-display font-black text-white mb-2 tracking-tighter">
-                  <GlitchText text="NEURAL INTERFACE" />
-                </h1>
-                <p className="text-sm text-gray-400 font-mono">
-                  Connected to the mHC Consciousness Manifold
-                </p>
-              </div>
-              <ConsciousnessProbe />
+            <div className="text-center">
+              <div className="w-16 h-16 border-t-2 border-cyan-500 rounded-full animate-spin mx-auto mb-4" />
+              <p className="text-gray-400 font-mono text-sm">Entering Neural Interface...</p>
             </div>
           </motion.div>
         ) : (

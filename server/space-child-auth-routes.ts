@@ -347,4 +347,139 @@ export function registerSpaceChildAuthRoutes(app: Express) {
       res.status(500).json({ error: "Failed to get credentials" });
     }
   });
+
+  // ============================================
+  // SSO ENDPOINTS FOR EXTERNAL APPS
+  // ============================================
+
+  // SSO token exchange - external apps redirect here to get tokens
+  app.get("/api/space-child-auth/sso/authorize", isSpaceChildAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const { subdomain, callback } = req.query;
+      const claims = (req as any).user?.claims;
+
+      if (!subdomain || !callback) {
+        return res.status(400).json({ error: "Missing subdomain or callback URL" });
+      }
+
+      if (!claims) {
+        // Redirect to login with return URL
+        return res.redirect(`/?sso_callback=${encodeURIComponent(callback as string)}&subdomain=${subdomain}`);
+      }
+
+      const user = await storage.getUser(claims.sub);
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      // Generate tokens for the subdomain
+      const { accessToken, refreshToken } = await spaceChildAuth.generateTokens(user, subdomain as string);
+
+      // Track subdomain access
+      const existingAccess = await storage.getSubdomainAccess(user.id, subdomain as string);
+      if (!existingAccess) {
+        await storage.createSubdomainAccess({
+          userId: user.id,
+          subdomain: subdomain as string,
+          accessLevel: "user",
+        });
+      } else {
+        await storage.updateSubdomainLastAccess(user.id, subdomain as string);
+      }
+
+      // Redirect back to the app with tokens
+      const callbackUrl = new URL(callback as string);
+      callbackUrl.searchParams.set("access_token", accessToken);
+      callbackUrl.searchParams.set("refresh_token", refreshToken);
+      
+      res.redirect(callbackUrl.toString());
+    } catch (error: any) {
+      console.error("SSO authorize error:", error);
+      res.status(500).json({ error: "SSO authorization failed" });
+    }
+  });
+
+  // SSO token verification endpoint - external apps call this to verify tokens
+  app.post("/api/space-child-auth/sso/verify", async (req: Request, res: Response) => {
+    try {
+      const { token, subdomain } = req.body;
+
+      if (!token) {
+        return res.status(400).json({ error: "Token required" });
+      }
+
+      const payload = await spaceChildAuth.verifyAccessToken(token);
+      if (!payload) {
+        return res.status(401).json({ error: "Invalid or expired token" });
+      }
+
+      // Optionally verify subdomain matches
+      if (subdomain && payload.subdomain && payload.subdomain !== subdomain) {
+        return res.status(403).json({ error: "Token not valid for this subdomain" });
+      }
+
+      res.json({
+        valid: true,
+        userId: payload.userId,
+        email: payload.email,
+        firstName: payload.firstName,
+        lastName: payload.lastName,
+        subdomain: payload.subdomain,
+      });
+    } catch (error: any) {
+      console.error("SSO verify error:", error);
+      res.status(500).json({ error: "Token verification failed" });
+    }
+  });
+
+  // ============================================
+  // ADMIN ENDPOINTS
+  // ============================================
+
+  // Check if user is admin
+  function isAdmin(req: Request, res: Response, next: NextFunction) {
+    const claims = (req as any).user?.claims;
+    if (!claims) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    // Admin check - email contains admin or flaukowski
+    const email = claims.email?.toLowerCase() || "";
+    if (email.includes("admin") || email.includes("flaukowski")) {
+      return next();
+    }
+
+    return res.status(403).json({ message: "Forbidden - Admin access required" });
+  }
+
+  // Get all users (admin only)
+  app.get("/api/admin/users", isSpaceChildAuthenticated, isAdmin, async (req: Request, res: Response) => {
+    try {
+      const users = await storage.getAllUsers();
+      res.json(users.map(u => ({
+        id: u.id,
+        email: u.email,
+        firstName: u.firstName,
+        lastName: u.lastName,
+        isEmailVerified: u.isEmailVerified,
+        createdAt: u.createdAt,
+        lastLoginAt: u.lastLoginAt,
+      })));
+    } catch (error: any) {
+      console.error("Get users error:", error);
+      res.status(500).json({ error: "Failed to get users" });
+    }
+  });
+
+  // Revoke all tokens for a user (admin only)
+  app.post("/api/admin/users/:userId/revoke-tokens", isSpaceChildAuthenticated, isAdmin, async (req: Request, res: Response) => {
+    try {
+      const { userId } = req.params;
+      await spaceChildAuth.revokeUserTokens(userId);
+      res.json({ success: true, message: "All user tokens revoked" });
+    } catch (error: any) {
+      console.error("Revoke tokens error:", error);
+      res.status(500).json({ error: "Failed to revoke tokens" });
+    }
+  });
 }
