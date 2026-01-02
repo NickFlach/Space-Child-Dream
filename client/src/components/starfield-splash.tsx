@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface StarfieldSplashProps {
@@ -64,124 +64,7 @@ function CSSStarfield() {
 }
 
 export function StarfieldSplash({ duration = 9000, onComplete }: StarfieldSplashProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
   const [isComplete, setIsComplete] = useState(false);
-  const [useWebGL, setUseWebGL] = useState(false);
-
-  // Try to initialize WebGL starfield
-  useEffect(() => {
-    if (!containerRef.current || !useWebGL) return;
-
-    let cleanup: (() => void) | undefined;
-
-    const initThree = async () => {
-      try {
-        // Dynamic import to avoid crashes if Three.js has issues
-        const THREE = await import("three");
-        
-        const container = containerRef.current;
-        if (!container) return;
-
-        const width = window.innerWidth;
-        const height = window.innerHeight;
-
-        // Scene setup
-        const scene = new THREE.Scene();
-        const camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
-        camera.position.z = 5;
-
-        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-        renderer.setSize(width, height);
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-        container.appendChild(renderer.domElement);
-
-        // Create starfield with simpler PointsMaterial (more compatible)
-        const starsGeometry = new THREE.BufferGeometry();
-        const starCount = 3000;
-        const positions = new Float32Array(starCount * 3);
-
-        for (let i = 0; i < starCount; i++) {
-          const i3 = i * 3;
-          positions[i3] = (Math.random() - 0.5) * 100;
-          positions[i3 + 1] = (Math.random() - 0.5) * 100;
-          positions[i3 + 2] = (Math.random() - 0.5) * 100;
-        }
-
-        starsGeometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
-
-        // Use simpler PointsMaterial instead of ShaderMaterial
-        const starsMaterial = new THREE.PointsMaterial({
-          color: 0xffffff,
-          size: 0.5,
-          transparent: true,
-          opacity: 0.8,
-          sizeAttenuation: true,
-        });
-
-        const stars = new THREE.Points(starsGeometry, starsMaterial);
-        scene.add(stars);
-
-        // Animation
-        let animationId: number;
-        const startTime = Date.now();
-
-        const animate = () => {
-          const elapsed = (Date.now() - startTime) / 1000;
-          
-          // Move stars toward camera
-          const posArray = starsGeometry.attributes.position.array as Float32Array;
-          for (let i = 0; i < starCount; i++) {
-            const i3 = i * 3;
-            posArray[i3 + 2] += 0.1;
-            if (posArray[i3 + 2] > 50) {
-              posArray[i3 + 2] = -50;
-            }
-          }
-          starsGeometry.attributes.position.needsUpdate = true;
-          
-          // Gentle rotation
-          stars.rotation.y = elapsed * 0.02;
-
-          renderer.render(scene, camera);
-          animationId = requestAnimationFrame(animate);
-        };
-
-        animate();
-
-        // Handle resize
-        const handleResize = () => {
-          const newWidth = window.innerWidth;
-          const newHeight = window.innerHeight;
-          camera.aspect = newWidth / newHeight;
-          camera.updateProjectionMatrix();
-          renderer.setSize(newWidth, newHeight);
-        };
-
-        window.addEventListener("resize", handleResize);
-
-        // Set cleanup function
-        cleanup = () => {
-          window.removeEventListener("resize", handleResize);
-          cancelAnimationFrame(animationId);
-          renderer.dispose();
-          starsGeometry.dispose();
-          starsMaterial.dispose();
-          if (container && container.contains(renderer.domElement)) {
-            container.removeChild(renderer.domElement);
-          }
-        };
-      } catch (error) {
-        console.warn("WebGL starfield failed, using CSS fallback:", error);
-        setUseWebGL(false);
-      }
-    };
-
-    initThree();
-
-    return () => {
-      if (cleanup) cleanup();
-    };
-  }, [useWebGL]);
 
   // Timer for completion
   useEffect(() => {
@@ -203,10 +86,8 @@ export function StarfieldSplash({ duration = 9000, onComplete }: StarfieldSplash
           transition={{ duration: 1 }}
           className="fixed inset-0 z-[100] bg-black flex items-center justify-center"
         >
-          {/* CSS starfield - always works */}
+          {/* CSS starfield */}
           <CSSStarfield />
-          {/* WebGL container - only used if useWebGL is true */}
-          {useWebGL && <div ref={containerRef} className="absolute inset-0" />}
           
           <motion.div
             initial={{ opacity: 0, y: 20 }}
