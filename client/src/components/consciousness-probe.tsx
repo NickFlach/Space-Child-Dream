@@ -51,21 +51,28 @@ export function ConsciousnessProbe() {
 
   const probeMutation = useMutation({
     mutationFn: async (text: string) => {
+      const token = useAuthStore.getState().accessToken;
       const response = await fetch("/api/consciousness/probe", {
         method: "POST",
         headers: { 
           "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({ text }),
       });
-      if (!response.ok) throw new Error("Failed to process thought");
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        throw new Error(error.error || error.message || "Failed to process thought");
+      }
       return response.json();
     },
     onSuccess: (data: Thought) => {
       setActiveThought(data);
       setInput("");
       queryClient.invalidateQueries({ queryKey: ["thoughts-feed"] });
+    },
+    onError: (error: Error) => {
+      console.error("Probe error:", error.message);
     },
   });
 
@@ -94,26 +101,31 @@ export function ConsciousnessProbe() {
            </p>
         </div>
 
-        <div className="relative">
+        <form 
+          className="relative flex gap-2"
+          onSubmit={(e) => {
+            e.preventDefault();
+            processThought();
+          }}
+        >
           <Input 
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            onKeyDown={handleKeyDown}
             placeholder="Enter a thought or concept..."
-            className="bg-black/50 border-white/20 text-white placeholder:text-white/20 font-mono focus:border-cyan-500/50"
+            className="bg-black/50 border-white/20 text-white placeholder:text-white/20 font-mono focus:border-cyan-500/50 pr-12"
             disabled={probeMutation.isPending}
             data-testid="input-consciousness"
           />
           <Button 
-            onClick={processThought}
+            type="submit"
             disabled={!input.trim() || probeMutation.isPending}
-            className="absolute right-1 top-1 h-8 bg-cyan-500/20 hover:bg-cyan-500/40 text-cyan-300 border border-cyan-500/50"
+            className="absolute right-1 top-1/2 -translate-y-1/2 h-8 bg-cyan-500/20 hover:bg-cyan-500/40 text-cyan-300 border border-cyan-500/50"
             size="sm"
             data-testid="button-probe"
           >
             {probeMutation.isPending ? <Activity className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
           </Button>
-        </div>
+        </form>
 
         <div className="flex-1 min-h-0 flex flex-col">
           <h4 className="text-xs font-mono text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-2">

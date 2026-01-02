@@ -5,6 +5,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Switch, Route } from "wouter";
 import { Spinner } from "@/components/ui/spinner";
+import { CookieConsent } from "@/components/cookie-consent";
+import { PWAInstallPrompt, OfflineIndicator, UpdateBanner } from "@/components/pwa";
 
 const Home = lazy(() => import("@/pages/home"));
 const VerifyEmailPage = lazy(() => import("@/pages/verify-email"));
@@ -13,11 +15,6 @@ const DashboardPage = lazy(() => import("@/pages/dashboard"));
 const NeuralInterfacePage = lazy(() => import("@/pages/neural-interface"));
 const PrivacyPage = lazy(() => import("@/pages/privacy"));
 const TermsPage = lazy(() => import("@/pages/terms"));
-
-const CookieConsent = lazy(() => import("@/components/cookie-consent").then(m => ({ default: m.CookieConsent })));
-const PWAInstallPrompt = lazy(() => import("@/components/pwa").then(m => ({ default: m.PWAInstallPrompt })));
-const OfflineIndicator = lazy(() => import("@/components/pwa").then(m => ({ default: m.OfflineIndicator })));
-const UpdateBanner = lazy(() => import("@/components/pwa").then(m => ({ default: m.UpdateBanner })));
 
 function PageLoader() {
   return (
@@ -43,12 +40,10 @@ function App() {
             <Route path="/" component={Home} />
           </Switch>
         </Suspense>
-        <Suspense fallback={null}>
-          <CookieConsent />
-          <PWAInstallPrompt appName="Space Child Dream" />
-          <OfflineIndicator />
-          <UpdateBanner />
-        </Suspense>
+        <CookieConsent />
+        <PWAInstallPrompt appName="Space Child Dream" />
+        <OfflineIndicator />
+        <UpdateBanner />
       </TooltipProvider>
     </QueryClientProvider>
   );
