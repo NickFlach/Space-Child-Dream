@@ -11,7 +11,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Sparkles, Shield, Loader2, Eye, EyeOff, Mail, CheckCircle } from "lucide-react";
+import { Sparkles, Loader2, Eye, EyeOff, Mail, CheckCircle } from "lucide-react";
+import logoImage from "@assets/IMG_20251007_202557_1766540112397_1767322345816.png";
 
 interface AuthModalProps {
   open: boolean;
@@ -252,7 +253,7 @@ export function AuthModal({ open, onOpenChange, onForgotPassword }: AuthModalPro
         <DialogContent className="sm:max-w-[425px] bg-slate-900 border-white/10">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-white">
-              <Shield className="w-5 h-5 text-cyan-400" />
+              <img src={logoImage} alt="Space Child" className="w-6 h-6 rounded" />
               Reset Password
             </DialogTitle>
             <DialogDescription className="text-gray-400">
@@ -356,7 +357,7 @@ export function AuthModal({ open, onOpenChange, onForgotPassword }: AuthModalPro
       <DialogContent className="sm:max-w-[425px] bg-slate-900 border-white/10">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-white">
-            <Shield className="w-5 h-5 text-cyan-400" />
+            <img src={logoImage} alt="Space Child" className="w-6 h-6 rounded" />
             Space Child Auth
           </DialogTitle>
           <DialogDescription className="text-gray-400">
@@ -505,7 +506,7 @@ export function AuthModal({ open, onOpenChange, onForgotPassword }: AuthModalPro
                 {isLoading ? (
                   <Loader2 className="w-4 h-4 animate-spin mr-2" />
                 ) : (
-                  <Shield className="w-4 h-4 mr-2" />
+                  <img src={logoImage} alt="" className="w-4 h-4 rounded mr-2" />
                 )}
                 Create Account
               </Button>
