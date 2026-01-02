@@ -24,6 +24,7 @@ import {
   CreditCard,
   LayoutDashboard,
   ChevronRight,
+  Blocks,
 } from "lucide-react";
 import generatedImage from '@assets/generated_images/abstract_ethereal_space_neural_network_background.png';
 
@@ -169,6 +170,37 @@ const APP_CATEGORIES: CategoryInfo[] = [
         status: "active",
         ogImage: "https://ide.spacechild.love/og-image.png",
         favicon: "https://ide.spacechild.love/favicon.svg",
+      },
+    ],
+  },
+  {
+    id: "web3",
+    name: "Web3",
+    icon: <Blocks className="w-5 h-5" />,
+    color: "from-amber-500 to-yellow-500",
+    description: "Decentralized futures built on blockchain. Smart contracts, tokenization, and the next evolution of the internet.",
+    heroPattern: "radial-gradient(ellipse at 30% 30%, rgba(245,158,11,0.3) 0%, transparent 50%), radial-gradient(ellipse at 70% 70%, rgba(234,179,8,0.2) 0%, transparent 50%), linear-gradient(135deg, rgba(245,158,11,0.1) 0%, rgba(234,179,8,0.1) 100%)",
+    apps: [
+      {
+        id: "pitchfork-echo-studio",
+        name: "Pitchfork Echo Studio",
+        description: "Decentralized music production and distribution platform. Create, collaborate, and own your sound on-chain.",
+        url: "https://protocol.pitchforks.social",
+        status: "coming_soon",
+      },
+      {
+        id: "amor",
+        name: "AMOR",
+        description: "Tokenized love and connection protocols. Building meaningful relationships through blockchain-verified interactions.",
+        url: "https://amor.pitchforks.social",
+        status: "coming_soon",
+      },
+      {
+        id: "ferrymanx",
+        name: "FerrymanX",
+        description: "Cross-chain bridge and asset transfer protocol. Navigate the multichain universe with consciousness-verified transactions.",
+        url: "https://ferry.pitchforks.social",
+        status: "coming_soon",
       },
     ],
   },
