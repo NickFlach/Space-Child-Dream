@@ -1,76 +1,162 @@
-# Space Child Auth SSO Integration Guide
+# Space Child Auth - Unified Authentication Guide
 
-This document describes how to integrate Space Child Auth SSO into all applications in the Source directory.
+This document describes how to use Space Child Auth across all applications in the Source directory. Each app supports **both** direct authentication (login/register forms) **and** SSO (redirect to Space-Child-Dream).
 
 ## Architecture Overview
 
-**Space-Child-Dream** serves as the central authentication server. All other apps redirect to Space-Child-Dream for login, then receive tokens back via URL callback.
+**Space-Child-Dream** serves as the central authentication server. All authentication requests (login, register, password reset, etc.) go through Space-Child-Dream's API endpoints.
 
-### User Flow
+### Authentication Modes
+
+1. **Direct Auth**: User logs in/registers directly within any app using the auth modal
+2. **SSO Auth**: User clicks "Sign in with Space Child Hub" and is redirected to Space-Child-Dream
+
+### User Flow (Direct Auth)
 1. User visits any app in the ecosystem
-2. If not authenticated, clicks "Sign in with Space Child"
-3. Redirected to Space-Child-Dream
-4. Sees starfield splash screen (9 seconds)
-5. Enters thought into Neural Interface
-6. After resonance response, clicks "Entry Granted"
-7. Lands on Dashboard with access to all apps
-8. Can click to launch any app (SSO tokens passed)
+2. Clicks "Sign In" to open the auth modal
+3. Enters email/password or creates new account
+4. Receives verification email, clicks link
+5. Logged in with JWT tokens stored locally
 
-## SSO Endpoints (Space-Child-Dream)
+### User Flow (SSO)
+1. User visits any app, clicks "Sign in with Space Child Hub"
+2. Redirected to Space-Child-Dream
+3. Sees starfield splash → Neural Interface → Dashboard
+4. Can launch any app with SSO tokens passed via URL
 
-### Authorization
+## API Endpoints (Space-Child-Dream)
+
+### Direct Authentication
+```
+POST /api/space-child-auth/register
+Body: { email, password, firstName?, lastName? }
+Response: { user, requiresVerification, message }
+
+POST /api/space-child-auth/login
+Body: { email, password }
+Response: { user, accessToken, refreshToken }
+
+POST /api/space-child-auth/verify-email
+Body: { token }
+Response: { user, accessToken, refreshToken, message }
+
+POST /api/space-child-auth/resend-verification
+Body: { email }
+Response: { success, message }
+
+POST /api/space-child-auth/forgot-password
+Body: { email }
+Response: { success, message }
+
+POST /api/space-child-auth/reset-password
+Body: { token, password }
+Response: { user, accessToken, refreshToken, message }
+
+POST /api/space-child-auth/refresh
+Body: { refreshToken }
+Response: { accessToken, refreshToken }
+
+GET /api/space-child-auth/user
+Headers: Authorization: Bearer {accessToken}
+Response: { id, email, firstName, lastName, ... }
+
+POST /api/space-child-auth/logout
+Headers: Authorization: Bearer {accessToken}
+```
+
+### SSO Endpoints
 ```
 GET /api/space-child-auth/sso/authorize?subdomain={app}&callback={url}
-```
 Redirects authenticated users back to callback with tokens.
 
-### Token Verification
-```
 POST /api/space-child-auth/sso/verify
-Body: { token: string, subdomain: string }
-Response: { valid: boolean, userId, email, firstName, lastName, subdomain }
-```
-
-### Token Refresh
-```
-POST /api/space-child-auth/refresh
-Body: { refreshToken: string }
-Response: { accessToken, refreshToken }
+Body: { token, subdomain }
+Response: { valid, userId, email, firstName, lastName, subdomain }
 ```
 
 ## App Integration
 
-### 1. Add SSO Client Library
-Copy `space-child-sso.ts` to your app's lib folder (already done for all repos).
+### Files Added to Each App
 
-### 2. Add Environment Variable
+Each app now has these files:
+
+| File | Purpose |
+|------|---------|
+| `lib/space-child-auth.ts` | Core auth client library |
+| `hooks/useSpaceChildAuth.ts` | React hook for auth state |
+| `components/space-child-auth-modal.tsx` | Login/register modal component |
+| `pages/reset-password.tsx` | Password reset page |
+| `pages/verify-email.tsx` | Email verification page |
+
+### Environment Variable
 ```env
 VITE_SPACE_CHILD_AUTH_URL=https://space-child-dream.replit.app
 ```
 
-### 3. Create SSO Hook
-Create `useSpaceChildAuth.ts` with your app's subdomain:
+### Using the Auth Hook
+```tsx
+import { useSpaceChildAuth } from '@/hooks/useSpaceChildAuth';
 
-```typescript
-import { getSpaceChildSSO } from '@/lib/space-child-sso';
+function MyComponent() {
+  const { 
+    user, 
+    isLoading, 
+    isAuthenticated,
+    login,           // Direct login
+    register,        // Direct register
+    loginWithSSO,    // SSO redirect
+    logout,
+    verifyEmail,
+    forgotPassword,
+    resetPassword,
+    resendVerification,
+  } = useSpaceChildAuth();
 
-const SUBDOMAIN = 'your-app-name'; // e.g., 'spacechild', 'angel-informant'
-
-// ... rest of hook (see SpaceChild for example)
+  // Direct login example
+  const handleLogin = async () => {
+    const result = await login({ email: 'user@example.com', password: 'password' });
+    if (result.requiresVerification) {
+      // Show verification pending UI
+    }
+  };
+}
 ```
 
-### 4. Add SSO Callback Route
-Add route `/sso/callback` that handles token extraction from URL.
-
-### 5. Add Login Button
+### Using the Auth Modal
 ```tsx
-const { login, logout, user, isLoading } = useSpaceChildAuth();
+import { useState } from 'react';
+import { SpaceChildAuthModal } from '@/components/space-child-auth-modal';
+import { useSpaceChildAuth } from '@/hooks/useSpaceChildAuth';
 
-return user ? (
-  <button onClick={logout}>Logout</button>
-) : (
-  <button onClick={login}>Sign in with Space Child</button>
-);
+function App() {
+  const [authOpen, setAuthOpen] = useState(false);
+  const { login, register, forgotPassword, resendVerification, loginWithSSO } = useSpaceChildAuth();
+
+  return (
+    <>
+      <Button onClick={() => setAuthOpen(true)}>Sign In</Button>
+      <SpaceChildAuthModal
+        open={authOpen}
+        onOpenChange={setAuthOpen}
+        onLogin={login}
+        onRegister={register}
+        onForgotPassword={forgotPassword}
+        onResendVerification={resendVerification}
+        onLoginWithSSO={loginWithSSO}
+        appName="Your App Name"
+      />
+    </>
+  );
+}
+```
+
+### Adding Routes
+Add these routes to your app's router:
+
+```tsx
+<Route path="/verify-email" element={<VerifyEmailPage />} />
+<Route path="/reset-password" element={<ResetPasswordPage />} />
+<Route path="/sso/callback" element={<SSOCallbackPage />} />
 ```
 
 ## Subdomain Mappings
