@@ -8,6 +8,9 @@ import VerifyEmailPage from "@/pages/verify-email";
 import ResetPasswordPage from "@/pages/reset-password";
 import DashboardPage from "@/pages/dashboard";
 import NeuralInterfacePage from "@/pages/neural-interface";
+import PrivacyPage from "@/pages/privacy";
+import TermsPage from "@/pages/terms";
+import { CookieConsent } from "@/components/cookie-consent";
 
 function App() {
   return (
@@ -19,8 +22,11 @@ function App() {
           <Route path="/reset-password" component={ResetPasswordPage} />
           <Route path="/dashboard" component={DashboardPage} />
           <Route path="/neural-interface" component={NeuralInterfacePage} />
+          <Route path="/privacy" component={PrivacyPage} />
+          <Route path="/terms" component={TermsPage} />
           <Route path="/" component={Home} />
         </Switch>
+        <CookieConsent />
       </TooltipProvider>
     </QueryClientProvider>
   );

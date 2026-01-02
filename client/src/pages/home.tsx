@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Sparkles } from "lucide-react";
 import { useState } from "react";
 import { AuthModal } from "@/components/auth-modal";
-import { useLocation } from "wouter";
+import { useLocation, Link } from "wouter";
 import generatedImage from '@assets/generated_images/abstract_ethereal_space_neural_network_background.png';
 
 export default function HomePage() {
@@ -99,6 +99,19 @@ export default function HomePage() {
       </AnimatePresence>
 
       <AuthModal open={authModalOpen} onOpenChange={setAuthModalOpen} />
+
+      {/* Footer */}
+      <footer className="fixed bottom-0 left-0 right-0 z-40 p-4 bg-gradient-to-t from-black/80 to-transparent">
+        <div className="flex justify-center items-center gap-6 text-xs text-gray-500 font-mono">
+          <span>© 2026 Space Child, LLC</span>
+          <Link href="/privacy">
+            <a className="hover:text-cyan-400 transition-colors">Privacy</a>
+          </Link>
+          <Link href="/terms">
+            <a className="hover:text-cyan-400 transition-colors">Terms</a>
+          </Link>
+        </div>
+      </footer>
     </div>
   );
 }
