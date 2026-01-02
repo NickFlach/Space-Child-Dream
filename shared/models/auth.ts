@@ -24,10 +24,14 @@ export const users = pgTable("users", {
   passwordHash: text("password_hash"),
   zkCredentialHash: text("zk_credential_hash"),
   isEmailVerified: boolean("is_email_verified").default(false),
+  role: text("role").default("user").notNull(), // user, admin, super_admin
   lastLoginAt: timestamp("last_login_at"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+}, (table) => [
+  index("idx_users_email").on(table.email),
+  index("idx_users_role").on(table.role),
+]);
 
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
@@ -46,7 +50,10 @@ export const zkCredentials = pgTable("zk_credentials", {
   expiresAt: timestamp("expires_at"),
   isRevoked: boolean("is_revoked").default(false),
   metadata: jsonb("metadata").$type<Record<string, any>>(),
-});
+}, (table) => [
+  index("idx_zk_credentials_user_id").on(table.userId),
+  index("idx_zk_credentials_commitment").on(table.publicCommitment),
+]);
 
 export const insertZkCredentialSchema = createInsertSchema(zkCredentials).omit({
   id: true,
@@ -93,7 +100,9 @@ export const refreshTokens = pgTable("refresh_tokens", {
   expiresAt: timestamp("expires_at").notNull(),
   isRevoked: boolean("is_revoked").default(false),
   createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
-});
+}, (table) => [
+  index("idx_refresh_tokens_user_id").on(table.userId),
+]);
 
 export const insertRefreshTokenSchema = createInsertSchema(refreshTokens).omit({
   id: true,
@@ -135,7 +144,10 @@ export const emailVerificationTokens = pgTable("email_verification_tokens", {
   expiresAt: timestamp("expires_at").notNull(),
   consumedAt: timestamp("consumed_at"),
   sentAt: timestamp("sent_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
-});
+}, (table) => [
+  index("idx_email_verification_tokens_user_id").on(table.userId),
+  index("idx_email_verification_tokens_expires").on(table.expiresAt),
+]);
 
 export const insertEmailVerificationTokenSchema = createInsertSchema(emailVerificationTokens).omit({
   id: true,
@@ -156,7 +168,10 @@ export const passwordResetTokens = pgTable("password_reset_tokens", {
   expiresAt: timestamp("expires_at").notNull(),
   consumedAt: timestamp("consumed_at"),
   createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
-});
+}, (table) => [
+  index("idx_password_reset_tokens_user_id").on(table.userId),
+  index("idx_password_reset_tokens_expires").on(table.expiresAt),
+]);
 
 export const insertPasswordResetTokenSchema = createInsertSchema(passwordResetTokens).omit({
   id: true,

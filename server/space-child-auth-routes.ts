@@ -46,6 +46,32 @@ export function isSpaceChildAuthenticated(req: Request, res: Response, next: Nex
   });
 }
 
+export function optionalSpaceChildAuth(req: Request, res: Response, next: NextFunction) {
+  const authHeader = req.headers.authorization;
+  
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return next();
+  }
+
+  const token = authHeader.split(" ")[1];
+  
+  spaceChildAuth.verifyAccessToken(token).then((payload) => {
+    if (payload) {
+      (req as any).user = {
+        claims: {
+          sub: payload.userId,
+          email: payload.email,
+          first_name: payload.firstName,
+          last_name: payload.lastName,
+        },
+      };
+    }
+    next();
+  }).catch(() => {
+    next();
+  });
+}
+
 export function registerSpaceChildAuthRoutes(app: Express) {
   app.post("/api/space-child-auth/register", async (req: Request, res: Response) => {
     try {
@@ -436,20 +462,29 @@ export function registerSpaceChildAuthRoutes(app: Express) {
   // ADMIN ENDPOINTS
   // ============================================
 
-  // Check if user is admin
-  function isAdmin(req: Request, res: Response, next: NextFunction) {
+  // Check if user is admin (uses role field from database, not email pattern matching)
+  async function isAdmin(req: Request, res: Response, next: NextFunction) {
     const claims = (req as any).user?.claims;
     if (!claims) {
       return res.status(401).json({ message: "Unauthorized" });
     }
 
-    // Admin check - email contains admin or flaukowski
-    const email = claims.email?.toLowerCase() || "";
-    if (email.includes("admin") || email.includes("flaukowski")) {
-      return next();
-    }
+    try {
+      const user = await storage.getUser(claims.sub);
+      if (!user) {
+        return res.status(401).json({ message: "User not found" });
+      }
 
-    return res.status(403).json({ message: "Forbidden - Admin access required" });
+      if (user.role === "admin" || user.role === "super_admin") {
+        (req as any).userRole = user.role;
+        return next();
+      }
+
+      return res.status(403).json({ message: "Forbidden - Admin access required" });
+    } catch (error) {
+      console.error("Admin check error:", error);
+      return res.status(500).json({ message: "Failed to verify admin access" });
+    }
   }
 
   // Get all users (admin only)

@@ -1,4 +1,5 @@
-import { db } from "./db";
+import { db, pool } from "./db";
+import { drizzle } from "drizzle-orm/node-postgres";
 import { 
   users, thoughts, promptVersions, subscriptions, usageLedger, sharedVisualizations,
   type User, type UpsertUser,
@@ -19,6 +20,7 @@ import {
   type PasswordResetToken, type InsertPasswordResetToken,
 } from "@shared/models/auth";
 import { eq, desc, and, gte, sql } from "drizzle-orm";
+import { cache, CACHE_KEYS, CACHE_TTL } from "./lib/cache";
 
 export interface IStorage {
   // Users
@@ -30,10 +32,12 @@ export interface IStorage {
   // Thoughts
   getThought(id: number): Promise<Thought | undefined>;
   getThoughtsByUser(userId: string, limit?: number): Promise<Thought[]>;
+  getThoughtsByUserPaginated(userId: string, limit: number, cursor?: number): Promise<{ items: Thought[]; nextCursor?: number }>;
   getThoughtByShareSlug(slug: string): Promise<Thought | undefined>;
   createThought(thought: InsertThought): Promise<Thought>;
   updateThought(id: number, data: Partial<InsertThought>): Promise<Thought | undefined>;
   getGlobalThoughtFeed(limit?: number): Promise<Array<Thought & { userName?: string }>>;
+  getGlobalThoughtFeedPaginated(limit: number, cursor?: number): Promise<{ items: Array<Thought & { userName?: string }>; nextCursor?: number }>;
 
   // Prompt Versions
   getActivePromptVersion(tier?: string): Promise<PromptVersion | undefined>;
@@ -56,6 +60,16 @@ export interface IStorage {
   getSharedVisualization(slug: string): Promise<SharedVisualization | undefined>;
   createSharedVisualization(viz: InsertSharedVisualization): Promise<SharedVisualization>;
   incrementViewCount(slug: string): Promise<void>;
+  
+  // Transactional operations
+  createProbeWithUsage(params: {
+    thought: InsertThought;
+    promptVersionId?: number;
+    resonance: number;
+    complexity: number;
+    tokensUsed: number;
+    billingPeriod: string;
+  }): Promise<Thought>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -104,6 +118,26 @@ export class DatabaseStorage implements IStorage {
     return db.select().from(thoughts).where(eq(thoughts.userId, userId)).orderBy(desc(thoughts.createdAt)).limit(limit);
   }
 
+  async getThoughtsByUserPaginated(userId: string, limit: number, cursor?: number): Promise<{ items: Thought[]; nextCursor?: number }> {
+    const conditions = cursor 
+      ? and(eq(thoughts.userId, userId), sql`${thoughts.id} < ${cursor}`)
+      : eq(thoughts.userId, userId);
+    
+    const items = await db.select()
+      .from(thoughts)
+      .where(conditions)
+      .orderBy(desc(thoughts.id))
+      .limit(limit + 1);
+    
+    const hasMore = items.length > limit;
+    if (hasMore) items.pop();
+    
+    return {
+      items,
+      nextCursor: hasMore && items.length > 0 ? items[items.length - 1].id : undefined,
+    };
+  }
+
   async getThoughtByShareSlug(slug: string): Promise<Thought | undefined> {
     const [thought] = await db.select().from(thoughts).where(eq(thoughts.shareSlug, slug));
     return thought;
@@ -111,6 +145,7 @@ export class DatabaseStorage implements IStorage {
 
   async createThought(thought: InsertThought): Promise<Thought> {
     const [created] = await db.insert(thoughts).values(thought).returning();
+    cache.delete(CACHE_KEYS.GLOBAL_FEED);
     return created;
   }
 
@@ -120,6 +155,10 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getGlobalThoughtFeed(limit = 20): Promise<Array<Thought & { userName?: string }>> {
+    const cacheKey = CACHE_KEYS.GLOBAL_FEED;
+    const cached = cache.get<Array<Thought & { userName?: string }>>(cacheKey);
+    if (cached) return cached;
+
     const results = await db.select({
       thought: thoughts,
       userName: users.firstName,
@@ -129,26 +168,69 @@ export class DatabaseStorage implements IStorage {
     .orderBy(desc(thoughts.createdAt))
     .limit(limit);
     
-    return results.map(r => ({
+    const feed = results.map(r => ({
       ...r.thought,
       userName: r.userName || "Anonymous",
     }));
+
+    cache.set(cacheKey, feed, CACHE_TTL.GLOBAL_FEED);
+    return feed;
+  }
+
+  async getGlobalThoughtFeedPaginated(limit: number, cursor?: number): Promise<{ items: Array<Thought & { userName?: string }>; nextCursor?: number }> {
+    const conditions = cursor 
+      ? sql`${thoughts.id} < ${cursor}`
+      : undefined;
+    
+    let query = db.select({
+      thought: thoughts,
+      userName: users.firstName,
+    })
+    .from(thoughts)
+    .leftJoin(users, eq(thoughts.userId, users.id))
+    .orderBy(desc(thoughts.id))
+    .limit(limit + 1);
+    
+    if (conditions) {
+      query = query.where(conditions) as typeof query;
+    }
+    
+    const results = await query;
+    
+    const hasMore = results.length > limit;
+    if (hasMore) results.pop();
+    
+    const items = results.map(r => ({
+      ...r.thought,
+      userName: r.userName || "Anonymous",
+    }));
+
+    return {
+      items,
+      nextCursor: hasMore && items.length > 0 ? items[items.length - 1].id : undefined,
+    };
   }
 
   // ============ PROMPT VERSIONS ============
   async getActivePromptVersion(tier = "all"): Promise<PromptVersion | undefined> {
-    // First try to find a tier-specific prompt
+    const cacheKey = CACHE_KEYS.PROMPT_VERSION(tier);
+    const cached = cache.get<PromptVersion>(cacheKey);
+    if (cached) return cached;
+
     let [version] = await db.select().from(promptVersions)
       .where(and(eq(promptVersions.isActive, true), eq(promptVersions.tier, tier)))
       .orderBy(desc(promptVersions.version))
       .limit(1);
     
-    // Fall back to "all" tier if no tier-specific prompt exists
     if (!version && tier !== "all") {
       [version] = await db.select().from(promptVersions)
         .where(and(eq(promptVersions.isActive, true), eq(promptVersions.tier, "all")))
         .orderBy(desc(promptVersions.version))
         .limit(1);
+    }
+    
+    if (version) {
+      cache.set(cacheKey, version, CACHE_TTL.PROMPT_VERSION);
     }
     
     return version;
@@ -175,11 +257,15 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getUserTier(userId: string): Promise<string> {
+    const cacheKey = CACHE_KEYS.USER_TIER(userId);
+    const cached = cache.get<string>(cacheKey);
+    if (cached) return cached;
+
     const sub = await this.getSubscription(userId);
-    if (!sub || sub.status !== "active") {
-      return "free";
-    }
-    return sub.tier;
+    const tier = (!sub || sub.status !== "active") ? "free" : sub.tier;
+    
+    cache.set(cacheKey, tier, CACHE_TTL.USER_TIER);
+    return tier;
   }
 
   async getSubscriptionByStripeId(stripeSubscriptionId: string): Promise<Subscription | undefined> {
@@ -194,6 +280,9 @@ export class DatabaseStorage implements IStorage {
 
   async updateSubscription(id: number, data: Partial<InsertSubscription>): Promise<Subscription | undefined> {
     const [updated] = await db.update(subscriptions).set({ ...data, updatedAt: new Date() }).where(eq(subscriptions.id, id)).returning();
+    if (updated?.userId) {
+      cache.delete(CACHE_KEYS.USER_TIER(updated.userId));
+    }
     return updated;
   }
 
@@ -376,6 +465,57 @@ export class DatabaseStorage implements IStorage {
     await db.update(passwordResetTokens)
       .set({ consumedAt: new Date() })
       .where(eq(passwordResetTokens.userId, userId));
+  }
+
+  // ============ TRANSACTIONAL OPERATIONS ============
+  async createProbeWithUsage(params: {
+    thought: InsertThought;
+    promptVersionId?: number;
+    resonance: number;
+    complexity: number;
+    tokensUsed: number;
+    billingPeriod: string;
+  }): Promise<Thought> {
+    const result = await db.transaction(async (tx) => {
+      const [createdThought] = await tx.insert(thoughts).values(params.thought).returning();
+
+      if (params.promptVersionId && params.thought.userId) {
+        const [activePrompt] = await tx.select().from(promptVersions)
+          .where(eq(promptVersions.id, params.promptVersionId))
+          .limit(1);
+
+        if (activePrompt) {
+          const currentCount = activePrompt.thoughtCount || 0;
+          const currentResonanceAvg = activePrompt.resonanceAvg || 0;
+          const currentComplexityAvg = activePrompt.complexityAvg || 0;
+
+          const newCount = currentCount + 1;
+          const newResonanceAvg = ((currentResonanceAvg * currentCount) + params.resonance) / newCount;
+          const newComplexityAvg = ((currentComplexityAvg * currentCount) + params.complexity) / newCount;
+
+          await tx.update(promptVersions)
+            .set({
+              thoughtCount: newCount,
+              resonanceAvg: newResonanceAvg,
+              complexityAvg: newComplexityAvg,
+            })
+            .where(eq(promptVersions.id, params.promptVersionId));
+        }
+
+        await tx.insert(usageLedger).values({
+          userId: params.thought.userId,
+          thoughtId: createdThought.id,
+          tokensUsed: params.tokensUsed,
+          action: "probe",
+          billingPeriod: params.billingPeriod,
+        });
+      }
+
+      return createdThought;
+    });
+    
+    cache.delete(CACHE_KEYS.GLOBAL_FEED);
+    return result;
   }
 }
 

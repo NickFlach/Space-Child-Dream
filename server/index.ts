@@ -33,6 +33,32 @@ export function log(message: string, source = "express") {
   console.log(`${formattedTime} [${source}] ${message}`);
 }
 
+const SENSITIVE_ROUTES = [
+  "/api/space-child-auth/login",
+  "/api/space-child-auth/register",
+  "/api/space-child-auth/refresh",
+  "/api/space-child-auth/verify-email",
+  "/api/space-child-auth/reset-password",
+  "/api/space-child-auth/sso/authorize",
+  "/api/space-child-auth/zk/verify",
+];
+
+const SENSITIVE_FIELDS = ["accessToken", "refreshToken", "token", "password", "passwordHash"];
+
+function sanitizeResponse(obj: Record<string, any>): Record<string, any> {
+  const sanitized: Record<string, any> = {};
+  for (const key in obj) {
+    if (SENSITIVE_FIELDS.includes(key)) {
+      sanitized[key] = "[REDACTED]";
+    } else if (typeof obj[key] === "object" && obj[key] !== null) {
+      sanitized[key] = sanitizeResponse(obj[key]);
+    } else {
+      sanitized[key] = obj[key];
+    }
+  }
+  return sanitized;
+}
+
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
@@ -48,8 +74,14 @@ app.use((req, res, next) => {
     const duration = Date.now() - start;
     if (path.startsWith("/api")) {
       let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
+      
       if (capturedJsonResponse) {
-        logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
+        const isSensitiveRoute = SENSITIVE_ROUTES.some(route => path.startsWith(route));
+        if (isSensitiveRoute) {
+          logLine += ` :: [auth response - body redacted]`;
+        } else {
+          logLine += ` :: ${JSON.stringify(sanitizeResponse(capturedJsonResponse))}`;
+        }
       }
 
       log(logLine);

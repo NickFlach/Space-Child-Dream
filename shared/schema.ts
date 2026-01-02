@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, serial, integer, timestamp, boolean, real, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, serial, integer, timestamp, boolean, real, jsonb, index } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -24,7 +24,12 @@ export const thoughts = pgTable("thoughts", {
   isPublic: boolean("is_public").default(false),
   shareSlug: varchar("share_slug").unique(),
   createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
-});
+}, (table) => [
+  index("idx_thoughts_user_id").on(table.userId),
+  index("idx_thoughts_created_at").on(table.createdAt),
+  index("idx_thoughts_user_created").on(table.userId, table.createdAt),
+  index("idx_thoughts_is_public").on(table.isPublic),
+]);
 
 export const insertThoughtSchema = createInsertSchema(thoughts).omit({
   id: true,
@@ -49,7 +54,9 @@ export const promptVersions = pgTable("prompt_versions", {
   complexityAvg: real("complexity_avg").default(0),
   metadata: jsonb("metadata").$type<Record<string, any>>(),
   createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
-});
+}, (table) => [
+  index("idx_prompt_versions_tier_active").on(table.tier, table.isActive),
+]);
 
 export const insertPromptVersionSchema = createInsertSchema(promptVersions).omit({
   id: true,
@@ -75,7 +82,10 @@ export const subscriptions = pgTable("subscriptions", {
   cancelAtPeriodEnd: boolean("cancel_at_period_end").default(false),
   createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
   updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
-});
+}, (table) => [
+  index("idx_subscriptions_user_id").on(table.userId),
+  index("idx_subscriptions_status").on(table.status),
+]);
 
 export const insertSubscriptionSchema = createInsertSchema(subscriptions).omit({
   id: true,
@@ -98,7 +108,11 @@ export const usageLedger = pgTable("usage_ledger", {
   action: text("action").notNull(), // probe, share, export
   billingPeriod: text("billing_period"), // YYYY-MM format
   createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
-});
+}, (table) => [
+  index("idx_usage_ledger_user_id").on(table.userId),
+  index("idx_usage_ledger_user_created").on(table.userId, table.createdAt),
+  index("idx_usage_ledger_billing_period").on(table.billingPeriod),
+]);
 
 export const insertUsageLedgerSchema = createInsertSchema(usageLedger).omit({
   id: true,

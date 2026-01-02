@@ -14,12 +14,19 @@ const PASSWORD_RESET_EXPIRY = 15 * 60 * 1000; // 15 minutes
 
 const envSecret = process.env.SESSION_SECRET;
 if (!envSecret) {
-  console.warn("WARNING: SESSION_SECRET not set. Space Child Auth will use a fallback secret. This is insecure for production!");
+  if (process.env.NODE_ENV === "production") {
+    console.error("FATAL: SESSION_SECRET is required in production. Exiting.");
+    process.exit(1);
+  }
+  console.warn("WARNING: SESSION_SECRET not set. Using development-only fallback. Set SESSION_SECRET before deploying to production!");
 }
 
 function getJwtSecret(): string {
   if (!envSecret) {
-    return "space-child-insecure-fallback-" + (process.env.DATABASE_URL?.slice(-16) || "dev");
+    if (process.env.NODE_ENV === "production") {
+      throw new Error("SESSION_SECRET is required in production");
+    }
+    return "space-child-dev-only-secret-do-not-use-in-production";
   }
   return envSecret;
 }

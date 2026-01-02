@@ -3,10 +3,11 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { registerChatRoutes } from "./replit_integrations/chat";
 import { registerImageRoutes } from "./replit_integrations/image";
-import { registerSpaceChildAuthRoutes, isSpaceChildAuthenticated } from "./space-child-auth-routes";
+import { registerSpaceChildAuthRoutes, isSpaceChildAuthenticated, optionalSpaceChildAuth } from "./space-child-auth-routes";
 import { getActiveSystemPrompt, analyzeThoughtPatterns } from "./services/prompt-evolution";
 import { stripe, createCheckoutSession, createPortalSession, handleWebhookEvent, TIER_PRICES } from "./services/stripe";
 import { checkDailyLimit, requireFeature } from "./middleware/entitlements";
+import { anonymousRateLimit, apiRateLimit } from "./middleware/rate-limit";
 import OpenAI from "openai";
 
 const openai = new OpenAI({
@@ -26,7 +27,10 @@ export async function registerRoutes(
   registerImageRoutes(app);
 
   // Consciousness Probe API - the core functionality (now with adaptive prompts and rate limiting)
-  app.post("/api/consciousness/probe", isSpaceChildAuthenticated, checkDailyLimit, async (req, res) => {
+  // optionalSpaceChildAuth MUST run first to set req.user for authenticated users
+  // anonymousRateLimit only applies to unauthenticated users (5 requests/day)
+  // checkDailyLimit applies tier-based limits to authenticated users
+  app.post("/api/consciousness/probe", optionalSpaceChildAuth, anonymousRateLimit, checkDailyLimit, async (req, res) => {
     try {
       const { text } = req.body;
 
@@ -68,51 +72,32 @@ export async function registerRoutes(
       const complexity = result.complexity || 50;
       const reflection = result.reflection || "The signal echoes in silence.";
       
-      // Save to database if user is authenticated
+      // Save to database if user is authenticated (uses transaction for data consistency)
       let thoughtId: number | undefined;
       
       if (userId) {
-        // Get active prompt version to link the thought
         const activePrompt = await storage.getActivePromptVersion(tier);
+        const tokensUsed = completion.usage?.total_tokens || 0;
         
-        const thought = await storage.createThought({
-          userId,
-          inputText: text,
-          reflection,
+        const thought = await storage.createProbeWithUsage({
+          thought: {
+            userId,
+            inputText: text,
+            reflection,
+            resonance,
+            complexity,
+            pattern,
+            tokensUsed,
+            promptVersionId: activePrompt?.id,
+            isPublic: true,
+          },
+          promptVersionId: activePrompt?.id,
           resonance,
           complexity,
-          pattern,
-          tokensUsed: completion.usage?.total_tokens || 0,
-          promptVersionId: activePrompt?.id,
-          isPublic: true,
-        });
-        thoughtId = thought.id;
-        
-        // Update prompt version metrics for learning architecture
-        if (activePrompt) {
-          const currentCount = activePrompt.thoughtCount || 0;
-          const currentResonanceAvg = activePrompt.resonanceAvg || 0;
-          const currentComplexityAvg = activePrompt.complexityAvg || 0;
-          
-          const newCount = currentCount + 1;
-          const newResonanceAvg = ((currentResonanceAvg * currentCount) + resonance) / newCount;
-          const newComplexityAvg = ((currentComplexityAvg * currentCount) + complexity) / newCount;
-          
-          await storage.updatePromptVersion(activePrompt.id, {
-            thoughtCount: newCount,
-            resonanceAvg: newResonanceAvg,
-            complexityAvg: newComplexityAvg,
-          });
-        }
-        
-        // Log usage
-        await storage.logUsage({
-          userId,
-          thoughtId: thought.id,
-          tokensUsed: completion.usage?.total_tokens || 0,
-          action: "probe",
+          tokensUsed,
           billingPeriod: new Date().toISOString().slice(0, 7),
         });
+        thoughtId = thought.id;
       }
       
       res.json({
@@ -130,23 +115,39 @@ export async function registerRoutes(
     }
   });
 
-  // Get global thought feed (last 20 entries from all users, FIFO)
+  // Get global thought feed with pagination
   app.get("/api/thoughts/feed", isSpaceChildAuthenticated, async (req: any, res) => {
     try {
-      const feed = await storage.getGlobalThoughtFeed(20);
-      res.json(feed.reverse());
+      const limit = Math.min(parseInt(req.query.limit as string) || 20, 50);
+      const cursor = req.query.cursor ? parseInt(req.query.cursor as string) : undefined;
+      
+      const { items, nextCursor } = await storage.getGlobalThoughtFeedPaginated(limit, cursor);
+      
+      res.json({
+        items,
+        nextCursor,
+        hasMore: !!nextCursor,
+      });
     } catch (error) {
       console.error("Error fetching thought feed:", error);
       res.status(500).json({ error: "Failed to fetch feed" });
     }
   });
 
-  // Get user's thought history
+  // Get user's thought history with pagination
   app.get("/api/thoughts/history", isSpaceChildAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
-      const thoughts = await storage.getThoughtsByUser(userId, 50);
-      res.json(thoughts);
+      const limit = Math.min(parseInt(req.query.limit as string) || 20, 100);
+      const cursor = req.query.cursor ? parseInt(req.query.cursor as string) : undefined;
+      
+      const { items, nextCursor } = await storage.getThoughtsByUserPaginated(userId, limit, cursor);
+      
+      res.json({
+        items,
+        nextCursor,
+        hasMore: !!nextCursor,
+      });
     } catch (error) {
       console.error("Error fetching thought history:", error);
       res.status(500).json({ error: "Failed to fetch history" });
