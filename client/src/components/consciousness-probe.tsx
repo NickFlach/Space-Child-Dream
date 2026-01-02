@@ -36,7 +36,8 @@ export function ConsciousnessProbe() {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
       if (!response.ok) throw new Error("Failed to fetch feed");
-      return response.json();
+      const data = await response.json();
+      return data.items || data;
     },
     refetchInterval: 5000,
     enabled: !!accessToken,

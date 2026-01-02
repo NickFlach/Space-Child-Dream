@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { useAuth } from "@/hooks/use-auth";
+import { useAuth, useAuthStore } from "@/hooks/use-auth";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -39,9 +39,20 @@ export default function AccountPage() {
   const [activeTab, setActiveTab] = useState("profile");
   const { toast } = useToast();
 
+  const { accessToken } = useAuthStore();
+  
   const { data: thoughts = [] } = useQuery<ThoughtHistory[]>({
     queryKey: ["/api/thoughts/history"],
-    enabled: !!user,
+    queryFn: async () => {
+      const res = await fetch("/api/thoughts/history", {
+        credentials: "include",
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (!res.ok) throw new Error("Failed to fetch history");
+      const data = await res.json();
+      return data.items || data;
+    },
+    enabled: !!user && !!accessToken,
   });
 
   const { data: usage } = useQuery<UsageStats>({
