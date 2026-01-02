@@ -16,7 +16,7 @@ interface PWAInstallPromptProps {
 
 export function PWAInstallPrompt({ 
   appName = 'Space Child',
-  delay = 3000,
+  delay = 7000,
   className = ''
 }: PWAInstallPromptProps) {
   const { isInstallable, isInstalled, installApp } = useSpaceChildPWA();
