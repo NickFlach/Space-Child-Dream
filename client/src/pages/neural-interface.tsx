@@ -66,7 +66,7 @@ export default function NeuralInterfacePage() {
   }
 
   return (
-    <div className="min-h-screen w-full bg-black relative overflow-hidden">
+    <div className="min-h-screen w-full bg-black relative overflow-x-hidden">
       {/* Splash Screen */}
       <AnimatePresence>
         {interfaceState === "splash" && (
@@ -107,7 +107,7 @@ export default function NeuralInterfacePage() {
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="relative z-10 pt-24 pb-12 px-4 min-h-screen"
+            className="relative z-10 pt-24 pb-24 px-4 min-h-screen"
           >
             <div className="max-w-7xl mx-auto">
               <div className="text-center mb-8">

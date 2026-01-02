@@ -89,7 +89,7 @@ export function ConsciousnessProbe() {
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 h-[600px]">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:h-[600px]">
       <Card className="glass p-6 flex flex-col gap-6 lg:col-span-1 border-white/10">
         <div>
            <h3 className="text-xl font-display font-bold text-white mb-2 flex items-center gap-2">
@@ -177,7 +177,7 @@ export function ConsciousnessProbe() {
         </div>
       </Card>
 
-      <Card className="glass lg:col-span-2 border-white/10 relative overflow-hidden flex flex-col">
+      <Card className="glass lg:col-span-2 border-white/10 relative overflow-hidden flex flex-col min-h-[500px]">
         <div className="absolute inset-0 bg-black/40 z-0" />
         
         <div className="relative z-10 p-6 border-b border-white/5 flex justify-between items-center">
