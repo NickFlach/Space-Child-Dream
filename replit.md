@@ -52,6 +52,17 @@ Space Child Dream is a consciousness exploration platform based on the mHC (Mani
 - Robots.txt at `/robots.txt`
 - OG meta endpoint at `/api/og/:slug`
 
+### Security & Performance Improvements (January 2026)
+- **Token Logging Security**: Auth response logging now sanitizes sensitive fields (accessToken, refreshToken, password, zkSecret) using recursive redaction
+- **JWT Secret Enforcement**: Application fails fast in production if SESSION_SECRET is not set, removing predictable fallback
+- **Anonymous Rate Limiting**: Anonymous users limited to 5 probes/day via IP-based rate limiting in `server/middleware/rate-limit.ts`
+- **Role-Based Admin Access**: Users table now includes `role` field (user/admin/superadmin), admin endpoints check role instead of email pattern
+- **Database Indexes**: Composite indexes added for common query patterns on thoughts, subscriptions, usage_ledger, and auth tables
+- **Transactional Operations**: `createProbeWithUsage` wraps thought creation, prompt stats update, and usage logging in a single transaction
+- **Caching Layer**: In-memory TTL-based cache in `server/lib/cache.ts` for prompt versions (5min), global feed (30sec), user tier (1min)
+- **Frontend Code Splitting**: All pages use React.lazy with Suspense for improved initial load time
+- **Cursor-Based Pagination**: Feed and history endpoints support `limit` and `cursor` query params for efficient data loading
+
 ## Project Architecture
 
 ### Frontend (React + Vite)
