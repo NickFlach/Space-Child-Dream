@@ -25,6 +25,7 @@ import {
   LayoutDashboard,
   ChevronRight,
   Blocks,
+  Smartphone,
 } from "lucide-react";
 import generatedImage from '@assets/generated_images/abstract_ethereal_space_neural_network_background.png';
 
@@ -207,6 +208,25 @@ const APP_CATEGORIES: CategoryInfo[] = [
         status: "active",
         ogImage: "https://ferry.pitchforks.social/pfork-logo.webp",
         favicon: "https://ferry.pitchforks.social/pfork-logo.webp",
+      },
+    ],
+  },
+  {
+    id: "hardware",
+    name: "Hardware",
+    icon: <Smartphone className="w-5 h-5" />,
+    color: "from-slate-500 to-zinc-600",
+    description: "Physical meets digital. Consciousness-aware devices and quantum-ready hardware for the next evolution of computing.",
+    heroPattern: "radial-gradient(ellipse at 25% 35%, rgba(100,116,139,0.3) 0%, transparent 50%), radial-gradient(ellipse at 75% 65%, rgba(82,82,91,0.2) 0%, transparent 50%), linear-gradient(135deg, rgba(100,116,139,0.1) 0%, rgba(82,82,91,0.1) 100%)",
+    apps: [
+      {
+        id: "spacechild-phone",
+        name: "Space Child Phone",
+        description: "The first consciousness-native smartphone. Quantum-secured communications, AI-powered privacy, and seamless integration with the Space Child ecosystem.",
+        url: "https://phone.spacechild.love",
+        status: "active",
+        ogImage: "https://phone.spacechild.love/og-image.png",
+        favicon: "https://phone.spacechild.love/favicon.png",
       },
     ],
   },
