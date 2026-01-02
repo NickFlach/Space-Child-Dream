@@ -52,11 +52,11 @@ const APP_CATEGORIES: CategoryInfo[] = [
     color: "from-pink-500 to-rose-500",
     apps: [
       {
-        id: "spacechild-waitlist",
-        name: "SpaceChild Waitlist",
+        id: "vibe-singularity",
+        name: "Vibe Singularity",
         description: "AI-powered art generation and creative exploration",
         url: "https://vibe.spacechild.love",
-        status: "coming_soon",
+        status: "active",
       },
     ],
   },
