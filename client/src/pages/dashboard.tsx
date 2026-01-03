@@ -209,6 +209,15 @@ const APP_CATEGORIES: CategoryInfo[] = [
         ogImage: "https://ferry.pitchforks.social/pfork-logo.webp",
         favicon: "https://ferry.pitchforks.social/pfork-logo.webp",
       },
+      {
+        id: "fateminter",
+        name: "FateMinter",
+        description: "Burn Pitchforks, Forge Fate. A cross-chain minting experience on Neo X.",
+        url: "https://fate.pitchforks.social",
+        status: "active",
+        ogImage: "https://fate.pitchforks.social/favicon.png",
+        favicon: "https://fate.pitchforks.social/favicon.png",
+      },
     ],
   },
   {
