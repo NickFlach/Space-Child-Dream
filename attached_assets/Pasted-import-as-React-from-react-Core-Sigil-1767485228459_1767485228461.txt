@@ -1,0 +1,138 @@
+import * as React from "react";
+
+/* --------------------------------------------------
+   Core Sigil Wrapper
+-------------------------------------------------- */
+
+export interface SigilProps extends React.SVGProps<SVGSVGElement> {
+  size?: number;
+  strokeWidth?: number;
+}
+
+const Sigil = ({
+  size = 24,
+  strokeWidth = 1.75,
+  children,
+  ...props
+}: SigilProps) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={strokeWidth}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    {...props}
+  >
+    {children}
+  </svg>
+);
+
+/* --------------------------------------------------
+   Space Child Sigils
+-------------------------------------------------- */
+
+// ART — Aperture
+export const ArtSigil = (props: SigilProps) => (
+  <Sigil {...props}>
+    <path d="M12 4a8 8 0 1 0 0 16" />
+    <path d="M9 9l6 6" />
+  </Sigil>
+);
+
+// RESEARCH — Lens
+export const ResearchSigil = (props: SigilProps) => (
+  <Sigil {...props}>
+    <circle cx="12" cy="12" r="7" />
+    <path d="M12 5a7 7 0 0 1 0 14" />
+    <circle cx="14" cy="10" r="1" />
+  </Sigil>
+);
+
+// FASHION — Thread
+export const FashionSigil = (props: SigilProps) => (
+  <Sigil {...props}>
+    <path d="M12 3c2 4 2 14 0 18" />
+    <path d="M9 12h6" />
+  </Sigil>
+);
+
+// LEARNING — Ascension
+export const LearningSigil = (props: SigilProps) => (
+  <Sigil {...props}>
+    <path d="M6 15l6-8 6 8" />
+    <path d="M12 7v10" />
+  </Sigil>
+);
+
+// INVESTING — Vessel
+export const InvestingSigil = (props: SigilProps) => (
+  <Sigil {...props}>
+    <path d="M5 14c2 4 12 4 14 0" />
+    <circle cx="12" cy="9" r="1.5" />
+  </Sigil>
+);
+
+// SHOPPING — Exchange
+export const ShoppingSigil = (props: SigilProps) => (
+  <Sigil {...props}>
+    <path d="M5 12c3-3 11-3 14 0" />
+    <path d="M5 12c3 3 11 3 14 0" />
+  </Sigil>
+);
+
+// DEVELOPMENT — Construct
+export const DevelopmentSigil = (props: SigilProps) => (
+  <Sigil {...props}>
+    <path d="M6 6h10v10" />
+    <path d="M6 16h4" />
+  </Sigil>
+);
+
+// WEB3 — Bridge
+export const Web3Sigil = (props: SigilProps) => (
+  <Sigil {...props}>
+    <circle cx="6" cy="12" r="2" />
+    <circle cx="18" cy="12" r="2" />
+    <path d="M8 12c2-3 6-3 8 0" />
+  </Sigil>
+);
+
+// EXPERIMENTAL — Bloom
+export const ExperimentalSigil = (props: SigilProps) => (
+  <Sigil {...props}>
+    <circle cx="12" cy="12" r="1.5" />
+    <path d="M12 4v4" />
+    <path d="M18 12h-4" />
+    <path d="M12 20v-4" />
+    <path d="M6 12h4" />
+  </Sigil>
+);
+
+// HARDWARE — Anchor
+export const HardwareSigil = (props: SigilProps) => (
+  <Sigil {...props}>
+    <path d="M12 4v12" />
+    <path d="M6 16c2 4 10 4 12 0" />
+    <circle cx="12" cy="4" r="1.5" />
+  </Sigil>
+);
+
+/* --------------------------------------------------
+   Optional Default Export (Lucide-style)
+-------------------------------------------------- */
+
+export const SpaceChildSigils = {
+  Art: ArtSigil,
+  Research: ResearchSigil,
+  Fashion: FashionSigil,
+  Learning: LearningSigil,
+  Investing: InvestingSigil,
+  Shopping: ShoppingSigil,
+  Development: DevelopmentSigil,
+  Web3: Web3Sigil,
+  Experimental: ExperimentalSigil,
+  Hardware: HardwareSigil,
+};
