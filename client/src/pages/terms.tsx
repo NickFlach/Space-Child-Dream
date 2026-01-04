@@ -247,7 +247,7 @@ export default function TermsPage() {
             <h2 className="text-2xl font-display font-bold text-cyan-400 mb-4">Privacy & Data Collection</h2>
             
             <p className="text-gray-300 leading-relaxed mb-4">
-              Your privacy is protected. Our collection and use of personal information is governed by our <Link href="/privacy"><a className="text-purple-400 hover:text-cyan-400 underline">Privacy Policy</a></Link>, which is incorporated into these Terms by reference.
+              Your privacy is protected. Our collection and use of personal information is governed by our <Link href="/privacy" className="text-purple-400 hover:text-cyan-400 underline">Privacy Policy</Link>, which is incorporated into these Terms by reference.
             </p>
 
             <p className="text-gray-300 text-sm leading-relaxed">
