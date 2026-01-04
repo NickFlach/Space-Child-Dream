@@ -1,4 +1,5 @@
 import * as React from "react";
+import { useId } from "react";
 
 export type SigilField =
   | "aurora"
@@ -7,15 +8,6 @@ export type SigilField =
   | "ember"
   | "neon"
   | "bloom";
-
-const FIELD_GRADIENTS: Record<SigilField, string> = {
-  aurora: "url(#aurora)",
-  plasma: "url(#plasma)",
-  void: "url(#void)",
-  ember: "url(#ember)",
-  neon: "url(#neon)",
-  bloom: "url(#bloom)",
-};
 
 export interface SigilProps extends React.SVGProps<SVGSVGElement> {
   size?: number;
@@ -34,86 +26,108 @@ const Sigil = ({
   children,
   className,
   ...props
-}: SigilProps) => (
-  <svg
-    width={size}
-    height={size}
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke={FIELD_GRADIENTS[field]}
-    strokeWidth={strokeWidth}
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    className={className}
-    {...props}
-  >
-    <defs>
-      <linearGradient id="aurora" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" stopColor="#6EE7F9" />
-        <stop offset="50%" stopColor="#A78BFA" />
-        <stop offset="100%" stopColor="#34D399" />
-      </linearGradient>
+}: SigilProps) => {
+  const id = useId();
+  const gradientId = `${field}-${id}`;
 
-      <linearGradient id="plasma" x1="0%" y1="100%" x2="100%" y2="0%">
-        <stop offset="0%" stopColor="#F472B6" />
-        <stop offset="100%" stopColor="#FBBF24" />
-      </linearGradient>
+  const getGradient = () => {
+    switch (field) {
+      case "aurora":
+        return (
+          <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#6EE7F9" />
+            <stop offset="50%" stopColor="#A78BFA" />
+            <stop offset="100%" stopColor="#34D399" />
+          </linearGradient>
+        );
+      case "plasma":
+        return (
+          <linearGradient id={gradientId} x1="0%" y1="100%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="#F472B6" />
+            <stop offset="100%" stopColor="#FBBF24" />
+          </linearGradient>
+        );
+      case "void":
+        return (
+          <radialGradient id={gradientId}>
+            <stop offset="0%" stopColor="#6366F1" />
+            <stop offset="100%" stopColor="#020617" />
+          </radialGradient>
+        );
+      case "ember":
+        return (
+          <linearGradient id={gradientId} x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stopColor="#F97316" />
+            <stop offset="100%" stopColor="#7C2D12" />
+          </linearGradient>
+        );
+      case "neon":
+        return (
+          <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="#22D3EE" />
+            <stop offset="100%" stopColor="#0EA5E9" />
+          </linearGradient>
+        );
+      case "bloom":
+        return (
+          <radialGradient id={gradientId}>
+            <stop offset="0%" stopColor="#F0ABFC" />
+            <stop offset="100%" stopColor="#4C1D95" />
+          </radialGradient>
+        );
+    }
+  };
 
-      <radialGradient id="void">
-        <stop offset="0%" stopColor="#6366F1" />
-        <stop offset="100%" stopColor="#020617" />
-      </radialGradient>
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke={`url(#${gradientId})`}
+      strokeWidth={strokeWidth}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      {...props}
+    >
+      <defs>{getGradient()}</defs>
 
-      <linearGradient id="ember" x1="0%" y1="0%" x2="0%" y2="100%">
-        <stop offset="0%" stopColor="#F97316" />
-        <stop offset="100%" stopColor="#7C2D12" />
-      </linearGradient>
+      {aura && (
+        <circle
+          cx="12"
+          cy="12"
+          r="10"
+          opacity="0.12"
+          fill={`url(#${gradientId})`}
+        >
+          {animate && (
+            <animate
+              attributeName="opacity"
+              values="0.08;0.18;0.08"
+              dur="6s"
+              repeatCount="indefinite"
+            />
+          )}
+        </circle>
+      )}
 
-      <linearGradient id="neon" x1="0%" y1="0%" x2="100%" y2="0%">
-        <stop offset="0%" stopColor="#22D3EE" />
-        <stop offset="100%" stopColor="#0EA5E9" />
-      </linearGradient>
-
-      <radialGradient id="bloom">
-        <stop offset="0%" stopColor="#F0ABFC" />
-        <stop offset="100%" stopColor="#4C1D95" />
-      </radialGradient>
-    </defs>
-
-    {aura && (
-      <circle
-        cx="12"
-        cy="12"
-        r="10"
-        opacity="0.12"
-        fill={FIELD_GRADIENTS[field]}
-      >
+      <g>
         {animate && (
-          <animate
-            attributeName="opacity"
-            values="0.08;0.18;0.08"
-            dur="6s"
+          <animateTransform
+            attributeName="transform"
+            type="rotate"
+            from="0 12 12"
+            to="360 12 12"
+            dur="60s"
             repeatCount="indefinite"
           />
         )}
-      </circle>
-    )}
-
-    <g>
-      {animate && (
-        <animateTransform
-          attributeName="transform"
-          type="rotate"
-          from="0 12 12"
-          to="360 12 12"
-          dur="60s"
-          repeatCount="indefinite"
-        />
-      )}
-      {children}
-    </g>
-  </svg>
-);
+        {children}
+      </g>
+    </svg>
+  );
+};
 
 export const ArtSigil = (props: SigilProps) => (
   <Sigil field="bloom" aura {...props}>
@@ -150,11 +164,7 @@ export const FashionSigil = (props: SigilProps) => (
         attributeName="d"
         dur="6s"
         repeatCount="indefinite"
-        values="
-          M12 3c2 4 2 14 0 18;
-          M11 3c3 5 3 13 1 18;
-          M12 3c2 4 2 14 0 18
-        "
+        values="M12 3c2 4 2 14 0 18;M11 3c3 5 3 13 1 18;M12 3c2 4 2 14 0 18"
       />
     </path>
   </Sigil>
@@ -207,7 +217,7 @@ export const Web3Sigil = (props: SigilProps) => (
   <Sigil field="void" aura {...props}>
     <circle cx="6" cy="12" r="2" />
     <circle cx="18" cy="12" r="2" />
-    <path d="M8 12c2-3 6-3 8 0">
+    <path d="M8 12c2-3 6-3 8 0" strokeDasharray="20">
       <animate
         attributeName="stroke-dashoffset"
         from="20"
