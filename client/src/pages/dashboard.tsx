@@ -11,22 +11,24 @@ import { UserNav } from "@/components/user-nav";
 import { GlitchText } from "@/components/glitch-text";
 import { ImmersiveBackground } from "@/components/immersive-background";
 import {
-  Palette,
-  FlaskConical,
-  Shirt,
-  GraduationCap,
-  TrendingUp,
-  Code,
-  Sparkles,
   ExternalLink,
   Settings,
   User,
   CreditCard,
   LayoutDashboard,
   ChevronRight,
-  Blocks,
-  Smartphone,
 } from "lucide-react";
+import {
+  ArtSigil,
+  ResearchSigil,
+  FashionSigil,
+  LearningSigil,
+  InvestingSigil,
+  DevelopmentSigil,
+  Web3Sigil,
+  ExperimentalSigil,
+  HardwareSigil,
+} from "@/components/space-child-sigils";
 import generatedImage from '@assets/generated_images/abstract_ethereal_space_neural_network_background.png';
 
 interface AppInfo {
@@ -54,7 +56,7 @@ const APP_CATEGORIES: CategoryInfo[] = [
   {
     id: "art",
     name: "Art",
-    icon: <Palette className="w-5 h-5" />,
+    icon: <ArtSigil className="w-5 h-5" />,
     color: "from-pink-500 to-rose-500",
     description: "Where consciousness meets canvas. Create, explore, and express through AI-powered artistic experiences.",
     heroPattern: "radial-gradient(ellipse at 30% 20%, rgba(236,72,153,0.3) 0%, transparent 50%), radial-gradient(ellipse at 70% 80%, rgba(244,63,94,0.2) 0%, transparent 50%), linear-gradient(135deg, rgba(236,72,153,0.1) 0%, rgba(244,63,94,0.1) 100%)",
@@ -73,7 +75,7 @@ const APP_CATEGORIES: CategoryInfo[] = [
   {
     id: "research",
     name: "Research",
-    icon: <FlaskConical className="w-5 h-5" />,
+    icon: <ResearchSigil className="w-5 h-5" />,
     color: "from-cyan-500 to-blue-500",
     description: "Pioneer the frontiers of knowledge. Collaborate on consciousness studies with blockchain-verified research.",
     heroPattern: "radial-gradient(ellipse at 20% 30%, rgba(6,182,212,0.3) 0%, transparent 50%), radial-gradient(ellipse at 80% 70%, rgba(59,130,246,0.2) 0%, transparent 50%), linear-gradient(135deg, rgba(6,182,212,0.1) 0%, rgba(59,130,246,0.1) 100%)",
@@ -92,7 +94,7 @@ const APP_CATEGORIES: CategoryInfo[] = [
   {
     id: "fashion",
     name: "Fashion",
-    icon: <Shirt className="w-5 h-5" />,
+    icon: <FashionSigil className="w-5 h-5" />,
     color: "from-purple-500 to-fuchsia-500",
     description: "Style meets the stars. Discover post-mythic footwear and cosmic fashion from the outer rim.",
     heroPattern: "radial-gradient(ellipse at 40% 20%, rgba(168,85,247,0.3) 0%, transparent 50%), radial-gradient(ellipse at 60% 80%, rgba(217,70,239,0.2) 0%, transparent 50%), linear-gradient(135deg, rgba(168,85,247,0.1) 0%, rgba(217,70,239,0.1) 100%)",
@@ -111,7 +113,7 @@ const APP_CATEGORIES: CategoryInfo[] = [
   {
     id: "learning",
     name: "Learning",
-    icon: <GraduationCap className="w-5 h-5" />,
+    icon: <LearningSigil className="w-5 h-5" />,
     color: "from-green-500 to-emerald-500",
     description: "Education born in zero gravity. Master AI, automation, and conscious technology for a wiser tomorrow.",
     heroPattern: "radial-gradient(ellipse at 25% 25%, rgba(34,197,94,0.3) 0%, transparent 50%), radial-gradient(ellipse at 75% 75%, rgba(16,185,129,0.2) 0%, transparent 50%), linear-gradient(135deg, rgba(34,197,94,0.1) 0%, rgba(16,185,129,0.1) 100%)",
@@ -130,7 +132,7 @@ const APP_CATEGORIES: CategoryInfo[] = [
   {
     id: "investing",
     name: "Investing",
-    icon: <TrendingUp className="w-5 h-5" />,
+    icon: <InvestingSigil className="w-5 h-5" />,
     color: "from-yellow-500 to-orange-500",
     description: "Angels among algorithms. Discover early-stage opportunities with AI-powered investment intelligence.",
     heroPattern: "radial-gradient(ellipse at 30% 30%, rgba(234,179,8,0.3) 0%, transparent 50%), radial-gradient(ellipse at 70% 70%, rgba(249,115,22,0.2) 0%, transparent 50%), linear-gradient(135deg, rgba(234,179,8,0.1) 0%, rgba(249,115,22,0.1) 100%)",
@@ -149,7 +151,7 @@ const APP_CATEGORIES: CategoryInfo[] = [
   {
     id: "development",
     name: "Development",
-    icon: <Code className="w-5 h-5" />,
+    icon: <DevelopmentSigil className="w-5 h-5" />,
     color: "from-blue-500 to-indigo-500",
     description: "Build in stealth, launch with impact. AI-powered development tools for the conscious creator.",
     heroPattern: "radial-gradient(ellipse at 20% 40%, rgba(59,130,246,0.3) 0%, transparent 50%), radial-gradient(ellipse at 80% 60%, rgba(99,102,241,0.2) 0%, transparent 50%), linear-gradient(135deg, rgba(59,130,246,0.1) 0%, rgba(99,102,241,0.1) 100%)",
@@ -177,7 +179,7 @@ const APP_CATEGORIES: CategoryInfo[] = [
   {
     id: "web3",
     name: "Web3",
-    icon: <Blocks className="w-5 h-5" />,
+    icon: <Web3Sigil className="w-5 h-5" />,
     color: "from-amber-500 to-yellow-500",
     description: "Decentralized futures built on blockchain. Smart contracts, tokenization, and the next evolution of the internet.",
     heroPattern: "radial-gradient(ellipse at 30% 30%, rgba(245,158,11,0.3) 0%, transparent 50%), radial-gradient(ellipse at 70% 70%, rgba(234,179,8,0.2) 0%, transparent 50%), linear-gradient(135deg, rgba(245,158,11,0.1) 0%, rgba(234,179,8,0.1) 100%)",
@@ -223,7 +225,7 @@ const APP_CATEGORIES: CategoryInfo[] = [
   {
     id: "hardware",
     name: "Hardware",
-    icon: <Smartphone className="w-5 h-5" />,
+    icon: <HardwareSigil className="w-5 h-5" />,
     color: "from-slate-500 to-zinc-600",
     description: "Physical meets digital. Consciousness-aware devices and quantum-ready hardware for the next evolution of computing.",
     heroPattern: "radial-gradient(ellipse at 25% 35%, rgba(100,116,139,0.3) 0%, transparent 50%), radial-gradient(ellipse at 75% 65%, rgba(82,82,91,0.2) 0%, transparent 50%), linear-gradient(135deg, rgba(100,116,139,0.1) 0%, rgba(82,82,91,0.1) 100%)",
@@ -242,7 +244,7 @@ const APP_CATEGORIES: CategoryInfo[] = [
   {
     id: "experimental",
     name: "Experimental",
-    icon: <Sparkles className="w-5 h-5" />,
+    icon: <ExperimentalSigil className="w-5 h-5" />,
     color: "from-violet-500 to-purple-500",
     description: "Where the impossible becomes possible. Explore the bleeding edge of consciousness technology.",
     heroPattern: "radial-gradient(ellipse at 35% 25%, rgba(139,92,246,0.3) 0%, transparent 50%), radial-gradient(ellipse at 65% 75%, rgba(168,85,247,0.2) 0%, transparent 50%), linear-gradient(135deg, rgba(139,92,246,0.1) 0%, rgba(168,85,247,0.1) 100%)",
