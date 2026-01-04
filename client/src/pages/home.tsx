@@ -79,32 +79,48 @@ export default function HomePage() {
                 <GlitchText text="SPACE CHILD" /> <br/> 
                 <span className="relative inline-block">
                   <span className="relative z-10 text-white drop-shadow-[0_0_20px_rgba(255,255,255,0.8)]">DREAM</span>
+                  {/* Primary inner glow */}
                   <motion.span
-                    className="absolute inset-0 z-0 bg-white/30 blur-2xl rounded-full"
+                    className="absolute inset-0 z-0 bg-white/40 blur-xl rounded-full"
                     animate={{
-                      scale: [1, 1.5, 1],
-                      opacity: [0.2, 0.5, 0.2],
-                      skewX: [0, 10, -10, 0],
-                      x: [0, 5, -5, 0],
-                      y: [0, -5, 5, 0],
+                      scale: [1, 1.6, 1],
+                      opacity: [0.4, 0.8, 0.4],
+                      skewX: [0, 15, -15, 0],
                     }}
                     transition={{
-                      duration: 6,
+                      duration: 4,
                       repeat: Infinity,
                       ease: "easeInOut",
                     }}
                   />
+                  {/* Middle whispy layer */}
                   <motion.span
-                    className="absolute inset-0 z-0 bg-white/20 blur-3xl rounded-full"
+                    className="absolute -inset-4 z-0 bg-white/30 blur-3xl rounded-full"
                     animate={{
-                      scale: [1.2, 1.8, 1.2],
-                      opacity: [0.1, 0.3, 0.1],
-                      rotate: [0, 15, -15, 0],
-                      x: [-5, 5, -5],
-                      y: [5, -5, 5],
+                      scale: [1.2, 2.0, 1.2],
+                      opacity: [0.2, 0.6, 0.2],
+                      rotate: [0, 20, -20, 0],
+                      x: [0, 10, -10, 0],
+                      y: [0, -10, 10, 0],
                     }}
                     transition={{
-                      duration: 10,
+                      duration: 7,
+                      repeat: Infinity,
+                      ease: "easeInOut",
+                    }}
+                  />
+                  {/* Outer atmospheric layer */}
+                  <motion.span
+                    className="absolute -inset-8 z-0 bg-white/20 blur-[64px] rounded-full"
+                    animate={{
+                      scale: [1.5, 2.5, 1.5],
+                      opacity: [0.1, 0.4, 0.1],
+                      rotate: [0, -15, 15, 0],
+                      x: [-15, 15, -15],
+                      y: [15, -15, 15],
+                    }}
+                    transition={{
+                      duration: 12,
                       repeat: Infinity,
                       ease: "linear",
                     }}
