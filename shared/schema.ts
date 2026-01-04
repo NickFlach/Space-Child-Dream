@@ -151,6 +151,9 @@ export type SharedVisualization = typeof sharedVisualizations.$inferSelect;
 // Re-export chat models
 export * from "./models/chat";
 
+// Re-export biofield profile models (Space Child Profile v2)
+export * from "./models/biofield-profile";
+
 // ============================================
 // TIER LIMITS CONFIGURATION
 // ============================================

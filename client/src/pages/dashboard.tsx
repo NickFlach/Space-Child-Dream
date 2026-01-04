@@ -10,13 +10,14 @@ import { useAuth } from "@/hooks/use-auth";
 import { UserNav } from "@/components/user-nav";
 import { GlitchText } from "@/components/glitch-text";
 import { ImmersiveBackground } from "@/components/immersive-background";
+import { BioFieldProfilePage } from "@/components/biofield";
 import {
   ExternalLink,
   Settings,
-  User,
   CreditCard,
   LayoutDashboard,
   ChevronRight,
+  Fingerprint,
 } from "lucide-react";
 import {
   ArtSigil,
@@ -326,8 +327,8 @@ export default function DashboardPage() {
                 Apps
               </TabsTrigger>
               <TabsTrigger value="profile" className="data-[state=active]:bg-cyan-500/20">
-                <User className="w-4 h-4 mr-2" />
-                Profile
+                <Fingerprint className="w-4 h-4 mr-2" />
+                Identity Field
               </TabsTrigger>
               <TabsTrigger value="subscription" className="data-[state=active]:bg-cyan-500/20">
                 <CreditCard className="w-4 h-4 mr-2" />
@@ -506,28 +507,7 @@ export default function DashboardPage() {
             </TabsContent>
 
             <TabsContent value="profile">
-              <Card className="glass border-white/10 p-8">
-                <h2 className="text-xl font-display font-bold text-white mb-6">Profile Management</h2>
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="text-xs text-gray-500 font-mono uppercase">First Name</label>
-                      <p className="text-white">{user?.firstName || "—"}</p>
-                    </div>
-                    <div>
-                      <label className="text-xs text-gray-500 font-mono uppercase">Last Name</label>
-                      <p className="text-white">{user?.lastName || "—"}</p>
-                    </div>
-                    <div className="col-span-2">
-                      <label className="text-xs text-gray-500 font-mono uppercase">Email</label>
-                      <p className="text-white">{user?.email || "—"}</p>
-                    </div>
-                  </div>
-                  <Button variant="outline" className="mt-4 border-cyan-500/50 text-cyan-400 hover:bg-cyan-500/10">
-                    Edit Profile
-                  </Button>
-                </div>
-              </Card>
+              <BioFieldProfilePage />
             </TabsContent>
 
             <TabsContent value="subscription">

@@ -4,6 +4,7 @@ import { storage } from "./storage";
 import { registerChatRoutes } from "./replit_integrations/chat";
 import { registerImageRoutes } from "./replit_integrations/image";
 import { registerSpaceChildAuthRoutes, isSpaceChildAuthenticated, optionalSpaceChildAuth } from "./space-child-auth-routes";
+import { registerProfileRoutes } from "./profile-routes";
 import { getActiveSystemPrompt, analyzeThoughtPatterns } from "./services/prompt-evolution";
 import { stripe, createCheckoutSession, createPortalSession, handleWebhookEvent, TIER_PRICES } from "./services/stripe";
 import { checkDailyLimit, requireFeature } from "./middleware/entitlements";
@@ -21,6 +22,9 @@ export async function registerRoutes(
 ): Promise<Server> {
   // Register Space Child Auth routes (JWT-based, no session middleware needed)
   registerSpaceChildAuthRoutes(app);
+  
+  // Register Biofield Profile routes (Space Child Profile v2)
+  registerProfileRoutes(app);
   
   // Register AI integration routes
   registerChatRoutes(app);
