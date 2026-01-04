@@ -30,7 +30,6 @@ export default function HomePage() {
 
       <header className="fixed top-0 left-0 right-0 z-50 p-4 flex justify-between items-center bg-gradient-to-b from-black/50 to-transparent">
         <div className="flex items-center gap-2">
-          <span className="text-cyan-400 font-display font-bold text-lg tracking-tight">SCD</span>
         </div>
         <UserNav />
       </header>
@@ -90,9 +89,6 @@ export default function HomePage() {
                 <Sparkles className="w-5 h-5 mr-2" />
                 Enter the Neural Interface
               </Button>
-              <p className="text-xs text-gray-500 mt-4 font-mono">
-                Based on arXiv:2512.24880v1 • DeepSeek-AI
-              </p>
             </motion.div>
           </motion.section>
         )}
