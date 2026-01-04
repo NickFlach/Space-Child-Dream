@@ -76,7 +76,36 @@ export default function HomePage() {
                 Research Prototype
               </Badge>
               <h1 className="text-6xl md:text-8xl font-display font-black text-white mb-6 tracking-tighter drop-shadow-[0_0_30px_rgba(255,255,255,0.5)]">
-                <GlitchText text="SPACE CHILD" /> <br/> <span className="text-white drop-shadow-[0_0_20px_rgba(255,255,255,0.8)]">DREAM</span>
+                <GlitchText text="SPACE CHILD" /> <br/> 
+                <span className="relative inline-block">
+                  <span className="relative z-10 text-white drop-shadow-[0_0_20px_rgba(255,255,255,0.8)]">DREAM</span>
+                  <motion.span
+                    className="absolute inset-0 z-0 bg-white/20 blur-2xl rounded-full"
+                    animate={{
+                      scale: [1, 1.4, 1],
+                      opacity: [0.3, 0.6, 0.3],
+                      skew: [0, 5, -5, 0],
+                    }}
+                    transition={{
+                      duration: 8,
+                      repeat: Infinity,
+                      ease: "easeInOut",
+                    }}
+                  />
+                  <motion.span
+                    className="absolute inset-0 z-0 bg-white/10 blur-3xl rounded-full"
+                    animate={{
+                      scale: [1.2, 1.6, 1.2],
+                      opacity: [0.2, 0.4, 0.2],
+                      rotate: [0, 10, -10, 0],
+                    }}
+                    transition={{
+                      duration: 12,
+                      repeat: Infinity,
+                      ease: "linear",
+                    }}
+                  />
+                </span>
               </h1>
               <p className="text-xl md:text-2xl text-blue-100/70 font-sans max-w-2xl mx-auto leading-relaxed mb-8">
                 Explore consciousness through <span className="text-white font-medium">Manifold-Constrained Hyper-Connections</span>
