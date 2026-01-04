@@ -34,19 +34,7 @@ export function UserNav() {
   }
 
   if (!isAuthenticated) {
-    return (
-      <>
-        <Button 
-          onClick={() => setAuthModalOpen(true)}
-          className="bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-600 hover:to-purple-600"
-          data-testid="button-nav-login"
-        >
-          <Sparkles className="w-4 h-4 mr-2" />
-          Sign In
-        </Button>
-        <AuthModal open={authModalOpen} onOpenChange={setAuthModalOpen} />
-      </>
-    );
+    return null;
   }
 
   return (
