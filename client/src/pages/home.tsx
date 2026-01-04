@@ -80,27 +80,31 @@ export default function HomePage() {
                 <span className="relative inline-block">
                   <span className="relative z-10 text-white drop-shadow-[0_0_20px_rgba(255,255,255,0.8)]">DREAM</span>
                   <motion.span
-                    className="absolute inset-0 z-0 bg-white/20 blur-2xl rounded-full"
+                    className="absolute inset-0 z-0 bg-white/30 blur-2xl rounded-full"
                     animate={{
-                      scale: [1, 1.4, 1],
-                      opacity: [0.3, 0.6, 0.3],
-                      skew: [0, 5, -5, 0],
+                      scale: [1, 1.5, 1],
+                      opacity: [0.2, 0.5, 0.2],
+                      skewX: [0, 10, -10, 0],
+                      x: [0, 5, -5, 0],
+                      y: [0, -5, 5, 0],
                     }}
                     transition={{
-                      duration: 8,
+                      duration: 6,
                       repeat: Infinity,
                       ease: "easeInOut",
                     }}
                   />
                   <motion.span
-                    className="absolute inset-0 z-0 bg-white/10 blur-3xl rounded-full"
+                    className="absolute inset-0 z-0 bg-white/20 blur-3xl rounded-full"
                     animate={{
-                      scale: [1.2, 1.6, 1.2],
-                      opacity: [0.2, 0.4, 0.2],
-                      rotate: [0, 10, -10, 0],
+                      scale: [1.2, 1.8, 1.2],
+                      opacity: [0.1, 0.3, 0.1],
+                      rotate: [0, 15, -15, 0],
+                      x: [-5, 5, -5],
+                      y: [5, -5, 5],
                     }}
                     transition={{
-                      duration: 12,
+                      duration: 10,
                       repeat: Infinity,
                       ease: "linear",
                     }}
