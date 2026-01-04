@@ -1,5 +1,9 @@
 import * as React from "react";
 
+/* --------------------------------------------------
+   Color Fields (Not Themes — Fields)
+-------------------------------------------------- */
+
 export type SigilField =
   | "aurora"
   | "plasma"
@@ -17,6 +21,10 @@ const FIELD_GRADIENTS: Record<SigilField, string> = {
   bloom: "url(#bloom)",
 };
 
+/* --------------------------------------------------
+   Core Sigil Wrapper (Animated)
+-------------------------------------------------- */
+
 export interface SigilProps extends React.SVGProps<SVGSVGElement> {
   size?: number;
   strokeWidth?: number;
@@ -32,7 +40,6 @@ const Sigil = ({
   animate = true,
   aura = false,
   children,
-  className,
   ...props
 }: SigilProps) => (
   <svg
@@ -44,7 +51,6 @@ const Sigil = ({
     strokeWidth={strokeWidth}
     strokeLinecap="round"
     strokeLinejoin="round"
-    className={className}
     {...props}
   >
     <defs>
@@ -115,6 +121,11 @@ const Sigil = ({
   </svg>
 );
 
+/* --------------------------------------------------
+   SIGILS (Now Living Objects)
+-------------------------------------------------- */
+
+// ART — Aperture (Creative Pulse)
 export const ArtSigil = (props: SigilProps) => (
   <Sigil field="bloom" aura {...props}>
     <path d="M12 4a8 8 0 1 0 0 16" />
@@ -129,6 +140,7 @@ export const ArtSigil = (props: SigilProps) => (
   </Sigil>
 );
 
+// RESEARCH — Lens (Slow Inquiry)
 export const ResearchSigil = (props: SigilProps) => (
   <Sigil field="aurora" aura {...props}>
     <circle cx="12" cy="12" r="7" />
@@ -143,6 +155,7 @@ export const ResearchSigil = (props: SigilProps) => (
   </Sigil>
 );
 
+// FASHION — Thread (Fluid Identity)
 export const FashionSigil = (props: SigilProps) => (
   <Sigil field="plasma" aura {...props}>
     <path d="M12 3c2 4 2 14 0 18">
@@ -160,6 +173,7 @@ export const FashionSigil = (props: SigilProps) => (
   </Sigil>
 );
 
+// LEARNING — Ascension (Upward Drift)
 export const LearningSigil = (props: SigilProps) => (
   <Sigil field="neon" aura {...props}>
     <path d="M6 15l6-8 6 8" />
@@ -175,6 +189,7 @@ export const LearningSigil = (props: SigilProps) => (
   </Sigil>
 );
 
+// INVESTING — Vessel (Stored Potential)
 export const InvestingSigil = (props: SigilProps) => (
   <Sigil field="ember" aura {...props}>
     <path d="M5 14c2 4 12 4 14 0" />
@@ -189,20 +204,7 @@ export const InvestingSigil = (props: SigilProps) => (
   </Sigil>
 );
 
-export const ShoppingSigil = (props: SigilProps) => (
-  <Sigil field="plasma" aura {...props}>
-    <path d="M5 12c3-3 11-3 14 0" />
-    <path d="M5 12c3 3 11 3 14 0" />
-  </Sigil>
-);
-
-export const DevelopmentSigil = (props: SigilProps) => (
-  <Sigil field="neon" aura {...props}>
-    <path d="M6 6h10v10" />
-    <path d="M6 16h4" />
-  </Sigil>
-);
-
+// WEB3 — Bridge (Signal Flow)
 export const Web3Sigil = (props: SigilProps) => (
   <Sigil field="void" aura {...props}>
     <circle cx="6" cy="12" r="2" />
@@ -219,6 +221,7 @@ export const Web3Sigil = (props: SigilProps) => (
   </Sigil>
 );
 
+// EXPERIMENTAL — Bloom (Unstable Expansion)
 export const ExperimentalSigil = (props: SigilProps) => (
   <Sigil field="bloom" aura {...props}>
     <circle cx="12" cy="12" r="1.5" />
@@ -229,6 +232,7 @@ export const ExperimentalSigil = (props: SigilProps) => (
   </Sigil>
 );
 
+// HARDWARE — Anchor (Grounded Stillness)
 export const HardwareSigil = (props: SigilProps) => (
   <Sigil field="void" aura={false} animate={false} {...props}>
     <path d="M12 4v12" />
@@ -237,14 +241,16 @@ export const HardwareSigil = (props: SigilProps) => (
   </Sigil>
 );
 
+/* --------------------------------------------------
+   Namespace Export
+-------------------------------------------------- */
+
 export const SpaceChildSigils = {
   Art: ArtSigil,
   Research: ResearchSigil,
   Fashion: FashionSigil,
   Learning: LearningSigil,
   Investing: InvestingSigil,
-  Shopping: ShoppingSigil,
-  Development: DevelopmentSigil,
   Web3: Web3Sigil,
   Experimental: ExperimentalSigil,
   Hardware: HardwareSigil,
