@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,13 +10,16 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { User, LogOut, Sparkles, CreditCard, Shield } from "lucide-react";
+import { User, LogOut, CreditCard, Shield } from "lucide-react";
 import { AuthModal } from "./auth-modal";
+import { SigilAvatar } from "./biofield/sigil-avatar";
+import { useBiofieldProfile } from "@/hooks/use-biofield-profile";
 
 export function UserNav() {
   const { user, isLoading, isAuthenticated, logout } = useAuth();
   const [, navigate] = useLocation();
   const [authModalOpen, setAuthModalOpen] = useState(false);
+  const { profile } = useBiofieldProfile();
 
   const handleLogout = () => {
     // Clear session storage to reset splash screen state
@@ -40,13 +42,13 @@ export function UserNav() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="relative h-10 w-10 rounded-full" data-testid="button-user-menu">
-          <Avatar className="h-10 w-10 border-2 border-cyan-500/50">
-            <AvatarImage src={user?.profileImageUrl || ""} alt={user?.firstName || "User"} />
-            <AvatarFallback className="bg-gradient-to-br from-cyan-500 to-purple-500 text-white">
-              {user?.firstName?.[0] || user?.email?.[0] || "U"}
-            </AvatarFallback>
-          </Avatar>
+        <Button variant="ghost" className="relative h-10 w-10 rounded-full p-0" data-testid="button-user-menu">
+          <SigilAvatar 
+            seed={profile?.identityCore?.sigilSeed || undefined}
+            primaryField={profile?.identityCore?.primaryField as any}
+            size={40}
+            className="border-2 border-cyan-500/50 rounded-full overflow-hidden"
+          />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56 bg-slate-900 border-white/10" align="end" forceMount>
