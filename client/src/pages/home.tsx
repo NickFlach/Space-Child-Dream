@@ -128,7 +128,7 @@ export default function HomePage() {
                 </span>
               </h1>
               <p className="text-xl md:text-2xl text-blue-100/70 font-sans max-w-2xl mx-auto leading-relaxed mb-8">
-                Explore consciousness through <span className="text-white font-medium">Manifold-Constrained Hyper-Connections</span>
+                Explore your consciousness through <span className="text-white font-medium">Hyper-Connections</span>
               </p>
               <Button 
                 onClick={() => setAuthModalOpen(true)}
