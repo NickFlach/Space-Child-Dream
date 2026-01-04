@@ -89,9 +89,6 @@ export default function HomePage() {
                 <Sparkles className="w-5 h-5 mr-2" />
                 Enter the Neural Interface
               </Button>
-              <p className="text-xs text-gray-500 mt-4 font-mono">
-                Based on arXiv:2512.24880v1 • DeepSeek-AI
-              </p>
             </motion.div>
           </motion.section>
         )}
