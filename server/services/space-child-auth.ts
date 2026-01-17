@@ -12,22 +12,15 @@ const REFRESH_TOKEN_EXPIRY = "7d";
 const EMAIL_VERIFICATION_EXPIRY = 24 * 60 * 60 * 1000; // 24 hours
 const PASSWORD_RESET_EXPIRY = 15 * 60 * 1000; // 15 minutes
 
-const envSecret = process.env.SESSION_SECRET;
+const envSecret: string = process.env.SESSION_SECRET || "";
 if (!envSecret) {
-  if (process.env.NODE_ENV === "production") {
-    console.error("FATAL: SESSION_SECRET is required in production. Exiting.");
-    process.exit(1);
-  }
-  console.warn("WARNING: SESSION_SECRET not set. Using development-only fallback. Set SESSION_SECRET before deploying to production!");
+  console.error("FATAL: SESSION_SECRET environment variable is required. Exiting.");
+  console.error("Please set SESSION_SECRET to a secure random string (min 32 characters).");
+  process.exit(1);
 }
 
 function getJwtSecret(): string {
-  if (!envSecret) {
-    if (process.env.NODE_ENV === "production") {
-      throw new Error("SESSION_SECRET is required in production");
-    }
-    return "space-child-dev-only-secret-do-not-use-in-production";
-  }
+  // envSecret is guaranteed to be non-empty due to startup check above
   return envSecret;
 }
 
@@ -610,6 +603,71 @@ export class SpaceChildAuthService {
       }
     }
     return null;
+  }
+
+  // Authorization code store for secure SSO token exchange
+  // Codes are single-use and expire after 60 seconds
+  private authorizationCodes: Map<string, { userId: string; subdomain: string; expiresAt: number }> = new Map();
+
+  async generateAuthorizationCode(userId: string, subdomain: string): Promise<string> {
+    // Clean up expired codes
+    const now = Date.now();
+    const expiredCodes: string[] = [];
+    this.authorizationCodes.forEach((data, code) => {
+      if (data.expiresAt < now) {
+        expiredCodes.push(code);
+      }
+    });
+    expiredCodes.forEach(code => this.authorizationCodes.delete(code));
+
+    // Generate cryptographically secure random code
+    const code = uuidv4() + "-" + uuidv4();
+    const expiresAt = now + 60 * 1000; // 60 seconds
+
+    this.authorizationCodes.set(code, { userId, subdomain, expiresAt });
+
+    return code;
+  }
+
+  async exchangeAuthorizationCode(code: string, subdomain: string): Promise<AuthResult> {
+    try {
+      const codeData = this.authorizationCodes.get(code);
+
+      if (!codeData) {
+        return { success: false, error: "Invalid or expired authorization code" };
+      }
+
+      // Delete code immediately (single-use)
+      this.authorizationCodes.delete(code);
+
+      // Check expiration
+      if (codeData.expiresAt < Date.now()) {
+        return { success: false, error: "Authorization code expired" };
+      }
+
+      // Verify subdomain matches
+      if (codeData.subdomain !== subdomain) {
+        return { success: false, error: "Subdomain mismatch" };
+      }
+
+      // Get user and generate tokens
+      const user = await storage.getUser(codeData.userId);
+      if (!user) {
+        return { success: false, error: "User not found" };
+      }
+
+      const { accessToken, refreshToken } = await this.generateTokens(user, subdomain);
+
+      return {
+        success: true,
+        user,
+        accessToken,
+        refreshToken,
+      };
+    } catch (error: any) {
+      console.error("Authorization code exchange error:", error);
+      return { success: false, error: error.message || "Code exchange failed" };
+    }
   }
 }
 

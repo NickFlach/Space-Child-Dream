@@ -548,16 +548,67 @@ export function registerSpaceChildAuthRoutes(app: Express) {
         await storage.updateSubdomainLastAccess(user.id, subdomain as string);
       }
 
-      // Redirect back to the app with tokens via POST message instead of URL params
-      // This prevents token leakage in browser history and server logs
+      // Generate a one-time authorization code instead of passing tokens in URL
+      // This prevents token leakage in browser history, server logs, and referrer headers
+      const authCode = await spaceChildAuth.generateAuthorizationCode(user.id, subdomain as string);
+
       const callbackUrl = new URL(callback as string);
-      callbackUrl.searchParams.set("access_token", accessToken);
-      callbackUrl.searchParams.set("refresh_token", refreshToken);
+      callbackUrl.searchParams.set("code", authCode);
+      callbackUrl.searchParams.set("subdomain", subdomain as string);
 
       res.redirect(callbackUrl.toString());
     } catch (error: any) {
       console.error("SSO authorize error:", error);
       res.status(500).json({ error: "SSO authorization failed" });
+    }
+  });
+
+  // SSO authorization code exchange endpoint - exchange one-time code for tokens
+  // This is called by external apps after receiving the authorization code via redirect
+  app.post("/api/space-child-auth/sso/token", async (req: Request, res: Response) => {
+    try {
+      // Rate limit by IP
+      const clientIp = req.ip || req.socket.remoteAddress || "unknown";
+      const rateLimitResult = checkAuthRateLimit(`sso_token:${clientIp}`);
+      if (!rateLimitResult.allowed) {
+        return res.status(429).json({
+          error: "Too many requests",
+          retryAfter: rateLimitResult.remainingSeconds,
+        });
+      }
+
+      const { code, subdomain } = req.body;
+
+      if (!code) {
+        return res.status(400).json({ error: "Authorization code required" });
+      }
+
+      if (!subdomain) {
+        return res.status(400).json({ error: "Subdomain required" });
+      }
+
+      const result = await spaceChildAuth.exchangeAuthorizationCode(code, subdomain);
+
+      if (!result.success) {
+        return res.status(401).json({ error: result.error });
+      }
+
+      // Return tokens via POST response body (not URL) - secure!
+      res.json({
+        access_token: result.accessToken,
+        refresh_token: result.refreshToken,
+        token_type: "Bearer",
+        expires_in: 900, // 15 minutes
+        user: {
+          id: result.user!.id,
+          email: result.user!.email,
+          firstName: result.user!.firstName,
+          lastName: result.user!.lastName,
+        },
+      });
+    } catch (error: any) {
+      console.error("SSO token exchange error:", error);
+      res.status(500).json({ error: "Token exchange failed" });
     }
   });
 

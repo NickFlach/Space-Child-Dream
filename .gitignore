@@ -9,6 +9,11 @@ vite.config.ts.*
 .claude/
 .claude-user/
 
+# Claude Flow
+.claude-flow/
+.swarm/
+.mcp.json
+
 # Replit
 .cache/
 .config/

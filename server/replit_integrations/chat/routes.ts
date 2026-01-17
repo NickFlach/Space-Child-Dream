@@ -1,15 +1,30 @@
-import type { Express, Request, Response } from "express";
+import type { Express, Request, Response, NextFunction } from "express";
 import OpenAI from "openai";
 import { chatStorage } from "./storage";
+import { isSpaceChildAuthenticated } from "../../space-child-auth-routes";
 
 const openai = new OpenAI({
   apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
   baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
 });
 
+// Authentication middleware for chat routes
+const requireAuth = (req: Request, res: Response, next: NextFunction) => {
+  isSpaceChildAuthenticated(req, res, (err?: any) => {
+    if (err) {
+      return res.status(401).json({ error: "Authentication required" });
+    }
+    const user = (req as any).user;
+    if (!user) {
+      return res.status(401).json({ error: "Authentication required" });
+    }
+    next();
+  });
+};
+
 export function registerChatRoutes(app: Express): void {
-  // Get all conversations
-  app.get("/api/conversations", async (req: Request, res: Response) => {
+  // Get all conversations (requires authentication)
+  app.get("/api/conversations", requireAuth, async (req: Request, res: Response) => {
     try {
       const conversations = await chatStorage.getAllConversations();
       res.json(conversations);
@@ -19,8 +34,8 @@ export function registerChatRoutes(app: Express): void {
     }
   });
 
-  // Get single conversation with messages
-  app.get("/api/conversations/:id", async (req: Request, res: Response) => {
+  // Get single conversation with messages (requires authentication)
+  app.get("/api/conversations/:id", requireAuth, async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id);
       const conversation = await chatStorage.getConversation(id);
@@ -35,8 +50,8 @@ export function registerChatRoutes(app: Express): void {
     }
   });
 
-  // Create new conversation
-  app.post("/api/conversations", async (req: Request, res: Response) => {
+  // Create new conversation (requires authentication)
+  app.post("/api/conversations", requireAuth, async (req: Request, res: Response) => {
     try {
       const { title } = req.body;
       const conversation = await chatStorage.createConversation(title || "New Chat");
@@ -47,8 +62,8 @@ export function registerChatRoutes(app: Express): void {
     }
   });
 
-  // Delete conversation
-  app.delete("/api/conversations/:id", async (req: Request, res: Response) => {
+  // Delete conversation (requires authentication)
+  app.delete("/api/conversations/:id", requireAuth, async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id);
       await chatStorage.deleteConversation(id);
@@ -59,8 +74,8 @@ export function registerChatRoutes(app: Express): void {
     }
   });
 
-  // Send message and get AI response (streaming)
-  app.post("/api/conversations/:id/messages", async (req: Request, res: Response) => {
+  // Send message and get AI response (streaming) (requires authentication)
+  app.post("/api/conversations/:id/messages", requireAuth, async (req: Request, res: Response) => {
     try {
       const conversationId = parseInt(req.params.id);
       const { content } = req.body;
