@@ -155,6 +155,32 @@ export * from "./models/chat";
 export * from "./models/biofield-profile";
 
 // ============================================
+// NOTIFICATION PREFERENCES
+// ============================================
+
+export const notificationPreferences = pgTable("notification_preferences", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").references(() => users.id, { onDelete: "cascade" }).notNull().unique(),
+  notificationEmail: varchar("notification_email"),
+  newAppsEnabled: boolean("new_apps_enabled").default(true),
+  updatesEnabled: boolean("updates_enabled").default(true),
+  marketingEnabled: boolean("marketing_enabled").default(false),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+}, (table) => [
+  index("idx_notification_preferences_user_id").on(table.userId),
+]);
+
+export const insertNotificationPreferencesSchema = createInsertSchema(notificationPreferences).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertNotificationPreferences = z.infer<typeof insertNotificationPreferencesSchema>;
+export type NotificationPreferences = typeof notificationPreferences.$inferSelect;
+
+// ============================================
 // TIER LIMITS CONFIGURATION
 // ============================================
 
