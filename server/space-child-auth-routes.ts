@@ -547,6 +547,13 @@ export function registerSpaceChildAuthRoutes(app: Express) {
   });
 
   // Update notification preferences
+  const notificationPreferencesSchema = z.object({
+    notificationEmail: z.string().email().optional().nullable(),
+    newAppsEnabled: z.boolean().optional(),
+    updatesEnabled: z.boolean().optional(),
+    marketingEnabled: z.boolean().optional(),
+  });
+
   app.put("/api/notification-preferences", isSpaceChildAuthenticated, async (req: Request, res: Response) => {
     try {
       const claims = (req as any).user?.claims;
@@ -554,7 +561,12 @@ export function registerSpaceChildAuthRoutes(app: Express) {
         return res.status(401).json({ message: "Unauthorized" });
       }
 
-      const { notificationEmail, newAppsEnabled, updatesEnabled, marketingEnabled } = req.body;
+      const parsed = notificationPreferencesSchema.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({ error: parsed.error.errors[0].message });
+      }
+
+      const { notificationEmail, newAppsEnabled, updatesEnabled, marketingEnabled } = parsed.data;
 
       const prefs = await storage.upsertNotificationPreferences({
         userId: claims.sub,

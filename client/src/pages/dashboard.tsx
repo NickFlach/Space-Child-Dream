@@ -6,6 +6,18 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Switch } from "@/components/ui/switch";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { useAuth } from "@/hooks/use-auth";
 import { UserNav } from "@/components/user-nav";
 import { GlitchText } from "@/components/glitch-text";
@@ -18,7 +30,13 @@ import {
   LayoutDashboard,
   ChevronRight,
   Fingerprint,
+  Bell,
+  Mail,
+  Loader2,
+  CheckCircle,
+  AlertCircle,
 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 import {
   ArtSigil,
   ResearchSigil,
@@ -272,11 +290,104 @@ const APP_CATEGORIES: CategoryInfo[] = [
   },
 ];
 
+interface NotificationPrefs {
+  notificationEmail: string;
+  newAppsEnabled: boolean;
+  updatesEnabled: boolean;
+  marketingEnabled: boolean;
+  accountEmail: string | null;
+}
+
 export default function DashboardPage() {
-  const { user } = useAuth();
+  const { user, accessToken } = useAuth();
   const searchString = useSearch();
+  const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("apps");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  
+  const [notifDialogOpen, setNotifDialogOpen] = useState(false);
+  const [notifLoading, setNotifLoading] = useState(false);
+  const [notifSaving, setNotifSaving] = useState(false);
+  const [notifPrefs, setNotifPrefs] = useState<NotificationPrefs>({
+    notificationEmail: "",
+    newAppsEnabled: true,
+    updatesEnabled: true,
+    marketingEnabled: false,
+    accountEmail: null,
+  });
+
+  const fetchNotificationPrefs = async () => {
+    if (!accessToken) return;
+    setNotifLoading(true);
+    try {
+      const res = await fetch("/api/notification-preferences", {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setNotifPrefs({
+          notificationEmail: data.notificationEmail || "",
+          newAppsEnabled: data.newAppsEnabled ?? true,
+          updatesEnabled: data.updatesEnabled ?? true,
+          marketingEnabled: data.marketingEnabled ?? false,
+          accountEmail: data.accountEmail,
+        });
+      }
+    } catch (error) {
+      console.error("Failed to fetch notification preferences:", error);
+    } finally {
+      setNotifLoading(false);
+    }
+  };
+
+  const saveNotificationPrefs = async () => {
+    if (!accessToken) return;
+    setNotifSaving(true);
+    try {
+      const res = await fetch("/api/notification-preferences", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({
+          notificationEmail: notifPrefs.notificationEmail || null,
+          newAppsEnabled: notifPrefs.newAppsEnabled,
+          updatesEnabled: notifPrefs.updatesEnabled,
+          marketingEnabled: notifPrefs.marketingEnabled,
+        }),
+      });
+      if (res.ok) {
+        setNotifDialogOpen(false);
+        toast({
+          title: "Preferences saved",
+          description: "Your notification preferences have been updated.",
+        });
+      } else {
+        const data = await res.json();
+        toast({
+          title: "Failed to save",
+          description: data.error || "Something went wrong. Please try again.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Failed to save notification preferences:", error);
+      toast({
+        title: "Error",
+        description: "Failed to save preferences. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setNotifSaving(false);
+    }
+  };
+
+  useEffect(() => {
+    if (notifDialogOpen) {
+      fetchNotificationPrefs();
+    }
+  }, [notifDialogOpen]);
 
   // Handle tab from URL query param
   useEffect(() => {
@@ -546,8 +657,126 @@ export default function DashboardPage() {
                       <Badge className="bg-green-500/20 text-green-400">Always On</Badge>
                     </div>
                     <div className="flex items-center justify-between p-3 rounded-lg bg-white/5">
-                      <span className="text-white">Email Notifications</span>
-                      <Button variant="ghost" size="sm" className="text-cyan-400">Configure</Button>
+                      <div className="flex items-center gap-2">
+                        <Bell className="w-4 h-4 text-cyan-400" />
+                        <span className="text-white">Email Notifications</span>
+                      </div>
+                      <Dialog open={notifDialogOpen} onOpenChange={setNotifDialogOpen}>
+                        <DialogTrigger asChild>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="text-cyan-400 hover:text-cyan-300"
+                            data-testid="button-configure-notifications"
+                          >
+                            Configure
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="bg-gray-900 border-white/10 text-white max-w-md">
+                          <DialogHeader>
+                            <DialogTitle className="flex items-center gap-2 text-white">
+                              <Mail className="w-5 h-5 text-cyan-400" />
+                              Email Notifications
+                            </DialogTitle>
+                            <DialogDescription className="text-gray-400">
+                              Configure how and when you receive email notifications from Space Child.
+                            </DialogDescription>
+                          </DialogHeader>
+                          
+                          {notifLoading ? (
+                            <div className="flex items-center justify-center py-8">
+                              <Loader2 className="w-6 h-6 animate-spin text-cyan-400" />
+                            </div>
+                          ) : (
+                            <div className="space-y-6 py-4">
+                              <div className="space-y-2">
+                                <Label htmlFor="notif-email" className="text-white">
+                                  Notification Email
+                                </Label>
+                                <Input
+                                  id="notif-email"
+                                  type="email"
+                                  placeholder={notifPrefs.accountEmail || "your@email.com"}
+                                  value={notifPrefs.notificationEmail}
+                                  onChange={(e) => setNotifPrefs(prev => ({ ...prev, notificationEmail: e.target.value }))}
+                                  className="bg-white/5 border-white/10 text-white placeholder:text-gray-500"
+                                  data-testid="input-notification-email"
+                                />
+                                <p className="text-xs text-gray-500">
+                                  Leave blank to use your account email ({notifPrefs.accountEmail || "not set"})
+                                </p>
+                              </div>
+
+                              <div className="space-y-4">
+                                <div className="flex items-center justify-between">
+                                  <div>
+                                    <Label htmlFor="new-apps" className="text-white">New Applications</Label>
+                                    <p className="text-xs text-gray-500">Get notified when new apps are added</p>
+                                  </div>
+                                  <Switch
+                                    id="new-apps"
+                                    checked={notifPrefs.newAppsEnabled}
+                                    onCheckedChange={(checked) => setNotifPrefs(prev => ({ ...prev, newAppsEnabled: checked }))}
+                                    data-testid="switch-new-apps"
+                                  />
+                                </div>
+
+                                <div className="flex items-center justify-between">
+                                  <div>
+                                    <Label htmlFor="updates" className="text-white">Platform Updates</Label>
+                                    <p className="text-xs text-gray-500">Important updates about Space Child</p>
+                                  </div>
+                                  <Switch
+                                    id="updates"
+                                    checked={notifPrefs.updatesEnabled}
+                                    onCheckedChange={(checked) => setNotifPrefs(prev => ({ ...prev, updatesEnabled: checked }))}
+                                    data-testid="switch-updates"
+                                  />
+                                </div>
+
+                                <div className="flex items-center justify-between">
+                                  <div>
+                                    <Label htmlFor="marketing" className="text-white">Marketing & Tips</Label>
+                                    <p className="text-xs text-gray-500">Occasional tips and promotional content</p>
+                                  </div>
+                                  <Switch
+                                    id="marketing"
+                                    checked={notifPrefs.marketingEnabled}
+                                    onCheckedChange={(checked) => setNotifPrefs(prev => ({ ...prev, marketingEnabled: checked }))}
+                                    data-testid="switch-marketing"
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                          )}
+
+                          <DialogFooter>
+                            <Button
+                              variant="outline"
+                              onClick={() => setNotifDialogOpen(false)}
+                              className="border-white/10 text-gray-400 hover:text-white"
+                              data-testid="button-cancel-notifications"
+                            >
+                              Cancel
+                            </Button>
+                            <Button
+                              onClick={saveNotificationPrefs}
+                              disabled={notifSaving || notifLoading}
+                              className="bg-cyan-500 hover:bg-cyan-600 text-white"
+                              data-testid="button-save-notifications"
+                            >
+                              {notifSaving ? (
+                                <>
+                                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                  Saving...
+                                </>
+                              ) : (
+                                "Save Preferences"
+                              )}
+                            </Button>
+                          </DialogFooter>
+                        </DialogContent>
+                      </Dialog>
                     </div>
                   </div>
                 </div>
