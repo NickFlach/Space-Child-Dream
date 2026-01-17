@@ -2,12 +2,14 @@ import { db, pool } from "./db";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { 
   users, thoughts, promptVersions, subscriptions, usageLedger, sharedVisualizations,
+  notificationPreferences,
   type User, type UpsertUser,
   type Thought, type InsertThought,
   type PromptVersion, type InsertPromptVersion,
   type Subscription, type InsertSubscription,
   type UsageLedger, type InsertUsageLedger,
   type SharedVisualization, type InsertSharedVisualization,
+  type NotificationPreferences, type InsertNotificationPreferences,
 } from "@shared/schema";
 import {
   zkCredentials, proofSessions, refreshTokens, subdomainAccess,
@@ -70,6 +72,10 @@ export interface IStorage {
     tokensUsed: number;
     billingPeriod: string;
   }): Promise<Thought>;
+
+  // Notification Preferences
+  getNotificationPreferences(userId: string): Promise<NotificationPreferences | undefined>;
+  upsertNotificationPreferences(prefs: InsertNotificationPreferences): Promise<NotificationPreferences>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -515,6 +521,31 @@ export class DatabaseStorage implements IStorage {
     });
     
     cache.delete(CACHE_KEYS.GLOBAL_FEED);
+    return result;
+  }
+
+  // ============ NOTIFICATION PREFERENCES ============
+  async getNotificationPreferences(userId: string): Promise<NotificationPreferences | undefined> {
+    const [prefs] = await db.select().from(notificationPreferences)
+      .where(eq(notificationPreferences.userId, userId));
+    return prefs;
+  }
+
+  async upsertNotificationPreferences(prefs: InsertNotificationPreferences): Promise<NotificationPreferences> {
+    const [result] = await db
+      .insert(notificationPreferences)
+      .values(prefs)
+      .onConflictDoUpdate({
+        target: notificationPreferences.userId,
+        set: {
+          notificationEmail: prefs.notificationEmail,
+          newAppsEnabled: prefs.newAppsEnabled,
+          updatesEnabled: prefs.updatesEnabled,
+          marketingEnabled: prefs.marketingEnabled,
+          updatedAt: new Date(),
+        },
+      })
+      .returning();
     return result;
   }
 }
