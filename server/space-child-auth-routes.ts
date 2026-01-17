@@ -517,4 +517,65 @@ export function registerSpaceChildAuthRoutes(app: Express) {
       res.status(500).json({ error: "Failed to revoke tokens" });
     }
   });
+
+  // ============================================
+  // NOTIFICATION PREFERENCES
+  // ============================================
+
+  // Get notification preferences
+  app.get("/api/notification-preferences", isSpaceChildAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const claims = (req as any).user?.claims;
+      if (!claims) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      const prefs = await storage.getNotificationPreferences(claims.sub);
+      const user = await storage.getUser(claims.sub);
+      
+      res.json({
+        notificationEmail: prefs?.notificationEmail || user?.email || null,
+        newAppsEnabled: prefs?.newAppsEnabled ?? true,
+        updatesEnabled: prefs?.updatesEnabled ?? true,
+        marketingEnabled: prefs?.marketingEnabled ?? false,
+        accountEmail: user?.email || null,
+      });
+    } catch (error: any) {
+      console.error("Get notification preferences error:", error);
+      res.status(500).json({ error: "Failed to get notification preferences" });
+    }
+  });
+
+  // Update notification preferences
+  app.put("/api/notification-preferences", isSpaceChildAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const claims = (req as any).user?.claims;
+      if (!claims) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      const { notificationEmail, newAppsEnabled, updatesEnabled, marketingEnabled } = req.body;
+
+      const prefs = await storage.upsertNotificationPreferences({
+        userId: claims.sub,
+        notificationEmail: notificationEmail || null,
+        newAppsEnabled: newAppsEnabled ?? true,
+        updatesEnabled: updatesEnabled ?? true,
+        marketingEnabled: marketingEnabled ?? false,
+      });
+
+      res.json({
+        success: true,
+        preferences: {
+          notificationEmail: prefs.notificationEmail,
+          newAppsEnabled: prefs.newAppsEnabled,
+          updatesEnabled: prefs.updatesEnabled,
+          marketingEnabled: prefs.marketingEnabled,
+        },
+      });
+    } catch (error: any) {
+      console.error("Update notification preferences error:", error);
+      res.status(500).json({ error: "Failed to update notification preferences" });
+    }
+  });
 }
