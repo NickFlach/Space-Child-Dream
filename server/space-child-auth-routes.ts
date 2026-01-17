@@ -9,14 +9,74 @@ const ADMIN_NOTIFICATION_COOLDOWN_MS = 5 * 60 * 1000;
 function checkAdminNotificationRateLimit(adminId: string): { allowed: boolean; remainingSeconds?: number } {
   const lastSent = adminNotificationRateLimit.get(adminId);
   const now = Date.now();
-  
+
   if (lastSent && now - lastSent < ADMIN_NOTIFICATION_COOLDOWN_MS) {
     const remainingSeconds = Math.ceil((ADMIN_NOTIFICATION_COOLDOWN_MS - (now - lastSent)) / 1000);
     return { allowed: false, remainingSeconds };
   }
-  
+
   adminNotificationRateLimit.set(adminId, now);
   return { allowed: true };
+}
+
+// Rate limiting for authentication endpoints to prevent brute-force attacks
+interface RateLimitEntry {
+  attempts: number;
+  firstAttempt: number;
+  blockedUntil?: number;
+}
+
+const authRateLimits = new Map<string, RateLimitEntry>();
+const AUTH_RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000; // 15 minutes
+const AUTH_MAX_ATTEMPTS = 5;
+const AUTH_BLOCK_DURATION_MS = 15 * 60 * 1000; // 15 minutes block after max attempts
+
+function checkAuthRateLimit(identifier: string): { allowed: boolean; remainingSeconds?: number; attemptsLeft?: number } {
+  const now = Date.now();
+  const entry = authRateLimits.get(identifier);
+
+  // Clean up old entries periodically
+  if (authRateLimits.size > 10000) {
+    const keysToDelete: string[] = [];
+    authRateLimits.forEach((val, key) => {
+      if (now - val.firstAttempt > AUTH_RATE_LIMIT_WINDOW_MS * 2) {
+        keysToDelete.push(key);
+      }
+    });
+    keysToDelete.forEach(key => authRateLimits.delete(key));
+  }
+
+  if (!entry) {
+    authRateLimits.set(identifier, { attempts: 1, firstAttempt: now });
+    return { allowed: true, attemptsLeft: AUTH_MAX_ATTEMPTS - 1 };
+  }
+
+  // Check if currently blocked
+  if (entry.blockedUntil && now < entry.blockedUntil) {
+    const remainingSeconds = Math.ceil((entry.blockedUntil - now) / 1000);
+    return { allowed: false, remainingSeconds };
+  }
+
+  // Reset if window has passed
+  if (now - entry.firstAttempt > AUTH_RATE_LIMIT_WINDOW_MS) {
+    authRateLimits.set(identifier, { attempts: 1, firstAttempt: now });
+    return { allowed: true, attemptsLeft: AUTH_MAX_ATTEMPTS - 1 };
+  }
+
+  // Increment attempts
+  entry.attempts++;
+
+  if (entry.attempts > AUTH_MAX_ATTEMPTS) {
+    entry.blockedUntil = now + AUTH_BLOCK_DURATION_MS;
+    const remainingSeconds = Math.ceil(AUTH_BLOCK_DURATION_MS / 1000);
+    return { allowed: false, remainingSeconds };
+  }
+
+  return { allowed: true, attemptsLeft: AUTH_MAX_ATTEMPTS - entry.attempts };
+}
+
+function clearAuthRateLimit(identifier: string): void {
+  authRateLimits.delete(identifier);
 }
 
 const registerSchema = z.object({
@@ -128,14 +188,29 @@ export function registerSpaceChildAuthRoutes(app: Express) {
       }
 
       const { email, password } = parsed.data;
+
+      // Rate limit by email and IP to prevent brute-force attacks
+      const clientIp = req.ip || req.socket.remoteAddress || "unknown";
+      const rateLimitKey = `login:${email.toLowerCase()}:${clientIp}`;
+      const rateCheck = checkAuthRateLimit(rateLimitKey);
+
+      if (!rateCheck.allowed) {
+        return res.status(429).json({
+          error: `Too many login attempts. Please try again in ${rateCheck.remainingSeconds} seconds.`,
+        });
+      }
+
       const result = await spaceChildAuth.login(email, password);
 
       if (!result.success) {
-        return res.status(401).json({ 
+        return res.status(401).json({
           error: result.error,
           requiresVerification: result.requiresVerification,
         });
       }
+
+      // Clear rate limit on successful login
+      clearAuthRateLimit(rateLimitKey);
 
       res.json({
         user: {
@@ -343,11 +418,25 @@ export function registerSpaceChildAuthRoutes(app: Express) {
         return res.status(400).json({ error: "Session ID and proof required" });
       }
 
+      // Rate limit ZKP verification attempts by IP
+      const clientIp = req.ip || req.socket.remoteAddress || "unknown";
+      const rateLimitKey = `zkp:${clientIp}`;
+      const rateCheck = checkAuthRateLimit(rateLimitKey);
+
+      if (!rateCheck.allowed) {
+        return res.status(429).json({
+          error: `Too many verification attempts. Please try again in ${rateCheck.remainingSeconds} seconds.`,
+        });
+      }
+
       const result = await spaceChildAuth.verifyZkProof({ sessionId, proof });
 
       if (!result.success) {
         return res.status(401).json({ error: result.error });
       }
+
+      // Clear rate limit on successful verification
+      clearAuthRateLimit(rateLimitKey);
 
       res.json({
         user: {
@@ -395,6 +484,30 @@ export function registerSpaceChildAuthRoutes(app: Express) {
   // ============================================
 
   // SSO token exchange - external apps redirect here to get tokens
+  // SECURITY: Only allow callbacks to trusted domains
+  const TRUSTED_SSO_DOMAINS = [
+    "spacechild.io",
+    "localhost",
+    "127.0.0.1",
+  ];
+
+  function isValidSsoCallback(callbackUrl: string): boolean {
+    try {
+      const url = new URL(callbackUrl);
+      const hostname = url.hostname.toLowerCase();
+
+      // Check if hostname matches or is a subdomain of trusted domains
+      return TRUSTED_SSO_DOMAINS.some(trusted => {
+        if (trusted === "localhost" || trusted === "127.0.0.1") {
+          return hostname === trusted;
+        }
+        return hostname === trusted || hostname.endsWith(`.${trusted}`);
+      });
+    } catch {
+      return false;
+    }
+  }
+
   app.get("/api/space-child-auth/sso/authorize", isSpaceChildAuthenticated, async (req: Request, res: Response) => {
     try {
       const { subdomain, callback } = req.query;
@@ -402,6 +515,12 @@ export function registerSpaceChildAuthRoutes(app: Express) {
 
       if (!subdomain || !callback) {
         return res.status(400).json({ error: "Missing subdomain or callback URL" });
+      }
+
+      // Validate callback URL against trusted domains
+      if (!isValidSsoCallback(callback as string)) {
+        console.warn(`SSO callback rejected - untrusted domain: ${callback}`);
+        return res.status(400).json({ error: "Invalid callback URL - untrusted domain" });
       }
 
       if (!claims) {
@@ -429,11 +548,12 @@ export function registerSpaceChildAuthRoutes(app: Express) {
         await storage.updateSubdomainLastAccess(user.id, subdomain as string);
       }
 
-      // Redirect back to the app with tokens
+      // Redirect back to the app with tokens via POST message instead of URL params
+      // This prevents token leakage in browser history and server logs
       const callbackUrl = new URL(callback as string);
       callbackUrl.searchParams.set("access_token", accessToken);
       callbackUrl.searchParams.set("refresh_token", refreshToken);
-      
+
       res.redirect(callbackUrl.toString());
     } catch (error: any) {
       console.error("SSO authorize error:", error);

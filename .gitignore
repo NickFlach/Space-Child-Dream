@@ -4,3 +4,17 @@ dist
 server/public
 vite.config.ts.*
 *.tar.gz
+
+# Claude Code
+.claude/
+.claude-user/
+
+# Replit
+.cache/
+.config/
+.local/
+.upm/
+.replit
+
+# Test coverage
+coverage/

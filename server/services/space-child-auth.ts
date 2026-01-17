@@ -355,28 +355,43 @@ export class SpaceChildAuthService {
         poseidon([BigInt(proofResponse.proof.commitment), BigInt(challengeHash)])
       );
 
-      if (proofResponse.proof.response !== expectedResponse) {
-        const credential = await storage.getZkCredentialByCommitment(proofResponse.proof.commitment);
-        if (!credential) {
-          return { success: false, error: "Invalid proof - credential not found" };
-        }
-
-        const user = await storage.getUser(credential.userId);
-        if (!user) {
-          return { success: false, error: "User not found" };
-        }
-
-        await storage.updateProofSession(session.id, {
-          status: "verified",
-          userId: user.id,
-          verifiedAt: new Date(),
-        });
-
-        const { accessToken, refreshToken } = await this.generateTokens(user);
-        return { success: true, user, accessToken, refreshToken };
+      // First, look up the credential by commitment
+      const credential = await storage.getZkCredentialByCommitment(proofResponse.proof.commitment);
+      if (!credential) {
+        return { success: false, error: "Invalid proof - credential not found" };
       }
 
-      return { success: false, error: "Proof verification failed" };
+      if (credential.isRevoked) {
+        return { success: false, error: "Credential has been revoked" };
+      }
+
+      if (credential.expiresAt && new Date() > credential.expiresAt) {
+        return { success: false, error: "Credential has expired" };
+      }
+
+      // Verify the proof response matches the expected value
+      if (proofResponse.proof.response !== expectedResponse) {
+        return { success: false, error: "Proof verification failed" };
+      }
+
+      const user = await storage.getUser(credential.userId);
+      if (!user) {
+        return { success: false, error: "User not found" };
+      }
+
+      // Check email verification status
+      if (!user.isEmailVerified) {
+        return { success: false, error: "Please verify your email before using ZKP authentication" };
+      }
+
+      await storage.updateProofSession(session.id, {
+        status: "verified",
+        userId: user.id,
+        verifiedAt: new Date(),
+      });
+
+      const { accessToken, refreshToken } = await this.generateTokens(user);
+      return { success: true, user, accessToken, refreshToken };
     } catch (error: any) {
       console.error("ZK proof verification error:", error);
       return { success: false, error: error.message || "Proof verification failed" };
