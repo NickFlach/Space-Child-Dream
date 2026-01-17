@@ -133,7 +133,7 @@ export default function NeuralInterfacePage() {
                   >
                     <Button
                       onClick={handleEntryGranted}
-                      className="bg-gradient-to-r from-cyan-500 via-purple-500 to-pink-500 hover:from-cyan-600 hover:via-purple-600 hover:to-pink-600 text-lg px-12 py-6 h-auto shadow-2xl shadow-purple-500/30 animate-pulse"
+                      className="text-lg px-12 py-6 h-auto shadow-2xl shadow-purple-500/30 animate-pulse"
                       size="lg"
                     >
                       <Shield className="w-6 h-6 mr-3" />

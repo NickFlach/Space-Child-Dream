@@ -567,7 +567,7 @@ export default function DashboardPage() {
                                   </div>
                                   <p className="text-gray-400 text-sm mb-5 leading-relaxed">{app.description}</p>
                                   <Button
-                                    className="w-full bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-600 hover:to-purple-600"
+                                    className="w-full"
                                     disabled={app.status === "coming_soon"}
                                     onClick={() => window.open(app.url, "_blank")}
                                   >
@@ -653,7 +653,7 @@ export default function DashboardPage() {
                     During beta, you have access to all apps in the Space Child ecosystem. 
                     Individual app subscriptions will be available soon.
                   </p>
-                  <Button variant="outline" className="border-cyan-500/50 text-cyan-400 hover:bg-cyan-500/10">
+                  <Button variant="outline">
                     Manage Billing
                   </Button>
                 </div>

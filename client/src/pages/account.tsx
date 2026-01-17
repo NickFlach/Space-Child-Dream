@@ -144,7 +144,7 @@ export default function AccountPage() {
           </CardHeader>
           <CardContent>
             <Button 
-              className="w-full bg-gradient-to-r from-cyan-500 to-purple-500"
+              className="w-full"
               onClick={() => window.location.href = "/api/login"}
               data-testid="button-login"
             >
@@ -173,9 +173,8 @@ export default function AccountPage() {
             </Button>
           </Link>
           <Button 
-            variant="outline" 
+            variant="destructive" 
             onClick={() => logout()}
-            className="border-red-500/30 text-red-400 hover:bg-red-500/10"
             data-testid="button-logout"
           >
             <LogOut className="w-4 h-4 mr-2" />

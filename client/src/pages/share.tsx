@@ -78,7 +78,7 @@ export default function SharePage() {
             <h1 className="text-xl font-bold text-white mb-2">Not Found</h1>
             <p className="text-gray-400 mb-4">This shared content doesn't exist or has been removed.</p>
             <Link href="/">
-              <Button className="bg-gradient-to-r from-cyan-500 to-purple-500" data-testid="button-go-home">
+              <Button data-testid="button-go-home">
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Go Home
               </Button>
@@ -200,7 +200,7 @@ export default function SharePage() {
           <div className="mt-8 text-center">
             <p className="text-gray-500 text-sm mb-4">Want to explore your own consciousness?</p>
             <Link href="/">
-              <Button className="bg-gradient-to-r from-cyan-500 to-purple-500" data-testid="button-try-it">
+              <Button data-testid="button-try-it">
                 <Brain className="w-4 h-4 mr-2" />
                 Try Space Child Dream
               </Button>
