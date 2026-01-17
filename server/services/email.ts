@@ -220,3 +220,213 @@ export async function sendWelcomeEmail(email: string, firstName?: string): Promi
 export function isEmailServiceConfigured(): boolean {
   return !!transporter;
 }
+
+export async function sendMarketingEmail(
+  email: string,
+  firstName: string | null,
+  subject: string,
+  content: { headline: string; highlights: string[]; cta: { text: string; url: string } }
+): Promise<boolean> {
+  if (!transporter) {
+    console.log(`[DEV MODE] Marketing email for ${email}: ${subject}`);
+    return true;
+  }
+
+  const name = firstName || "Explorer";
+  const appUrl = getAppUrl();
+
+  const highlightsHtml = content.highlights
+    .map(h => `<div class="highlight-item"><span class="bullet">✦</span> ${h}</div>`)
+    .join("");
+  const highlightsText = content.highlights.map(h => `• ${h}`).join("\n");
+
+  try {
+    await transporter.sendMail({
+      from: `"${APP_NAME}" <${FROM_EMAIL}>`,
+      to: email,
+      subject: subject,
+      html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0a0a0f; color: #ffffff; margin: 0; padding: 20px; }
+    .container { max-width: 600px; margin: 0 auto; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); border-radius: 16px; padding: 40px; border: 1px solid rgba(255,255,255,0.1); }
+    h1 { color: #22d3ee; margin-bottom: 20px; font-size: 24px; text-shadow: 0 0 20px rgba(34, 211, 238, 0.5); }
+    h2 { color: #a855f7; font-size: 18px; margin-top: 30px; text-shadow: 0 0 15px rgba(168, 85, 247, 0.5); }
+    p { line-height: 1.8; margin-bottom: 16px; color: #ffffff; text-shadow: 0 0 10px rgba(255, 255, 255, 0.3); font-size: 16px; }
+    .btn { display: inline-block; background: linear-gradient(135deg, #06b6d4 0%, #a855f7 100%); color: white; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; margin: 20px 0; box-shadow: 0 0 20px rgba(168, 85, 247, 0.4); }
+    .highlight-item { background: rgba(255,255,255,0.08); padding: 12px 16px; border-radius: 8px; margin: 8px 0; border-left: 3px solid #22d3ee; }
+    .bullet { color: #a855f7; margin-right: 8px; }
+    .footer { margin-top: 30px; font-size: 13px; color: #cbd5e1; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px; }
+    .footer p { color: #cbd5e1; text-shadow: none; }
+    .unsubscribe { color: #94a3b8; font-size: 12px; }
+    .unsubscribe a { color: #94a3b8; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>${content.headline}</h1>
+    <p>Hello ${name},</p>
+    <p>Here's what's happening in the Space Child ecosystem this week:</p>
+    
+    ${highlightsHtml}
+    
+    <p style="margin-top: 24px;"><a href="${content.cta.url}" class="btn">${content.cta.text}</a></p>
+    
+    <div class="footer">
+      <p>Stay curious, stay conscious.</p>
+      <p class="unsubscribe">You're receiving this because you subscribed to marketing updates.<br>
+      <a href="${appUrl}/dashboard?tab=settings">Manage your email preferences</a></p>
+    </div>
+  </div>
+</body>
+</html>
+      `,
+      text: `${content.headline}\n\nHello ${name},\n\nHere's what's happening in the Space Child ecosystem this week:\n\n${highlightsText}\n\n${content.cta.text}: ${content.cta.url}\n\nStay curious, stay conscious.\n\nManage your email preferences: ${appUrl}/dashboard?tab=settings`,
+    });
+    return true;
+  } catch (error) {
+    console.error("Failed to send marketing email:", error);
+    return false;
+  }
+}
+
+export async function sendNewAppNotification(
+  email: string,
+  firstName: string | null,
+  appName: string,
+  appDescription: string,
+  category: string,
+  appUrl: string
+): Promise<boolean> {
+  if (!transporter) {
+    console.log(`[DEV MODE] New app notification for ${email}: ${appName} in ${category}`);
+    return true;
+  }
+
+  const name = firstName || "Explorer";
+  const baseUrl = getAppUrl();
+
+  try {
+    await transporter.sendMail({
+      from: `"${APP_NAME}" <${FROM_EMAIL}>`,
+      to: email,
+      subject: `New in Space Child: ${appName} just launched!`,
+      html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0a0a0f; color: #ffffff; margin: 0; padding: 20px; }
+    .container { max-width: 600px; margin: 0 auto; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); border-radius: 16px; padding: 40px; border: 1px solid rgba(255,255,255,0.1); }
+    h1 { color: #22d3ee; margin-bottom: 20px; font-size: 24px; text-shadow: 0 0 20px rgba(34, 211, 238, 0.5); }
+    p { line-height: 1.8; margin-bottom: 16px; color: #ffffff; text-shadow: 0 0 10px rgba(255, 255, 255, 0.3); font-size: 16px; }
+    .btn { display: inline-block; background: linear-gradient(135deg, #06b6d4 0%, #a855f7 100%); color: white; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; margin: 20px 0; box-shadow: 0 0 20px rgba(168, 85, 247, 0.4); }
+    .app-card { background: rgba(255,255,255,0.08); padding: 24px; border-radius: 12px; margin: 20px 0; border: 1px solid rgba(34, 211, 238, 0.3); }
+    .category-badge { display: inline-block; background: rgba(168, 85, 247, 0.3); color: #a855f7; padding: 4px 12px; border-radius: 20px; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
+    .footer { margin-top: 30px; font-size: 13px; color: #cbd5e1; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px; }
+    .footer p { color: #cbd5e1; text-shadow: none; }
+    .unsubscribe { color: #94a3b8; font-size: 12px; }
+    .unsubscribe a { color: #94a3b8; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>A New App Has Arrived</h1>
+    <p>Hello ${name},</p>
+    <p>We're excited to announce a new addition to the Space Child ecosystem:</p>
+    
+    <div class="app-card">
+      <span class="category-badge">${category}</span>
+      <h2 style="color: #22d3ee; margin: 8px 0; font-size: 20px;">${appName}</h2>
+      <p style="margin-bottom: 0;">${appDescription}</p>
+    </div>
+    
+    <p><a href="${appUrl}" class="btn">Explore ${appName}</a></p>
+    
+    <div class="footer">
+      <p>Expanding consciousness, one app at a time.</p>
+      <p class="unsubscribe">You're receiving this because you subscribed to new app notifications.<br>
+      <a href="${baseUrl}/dashboard?tab=settings">Manage your email preferences</a></p>
+    </div>
+  </div>
+</body>
+</html>
+      `,
+      text: `A New App Has Arrived\n\nHello ${name},\n\nWe're excited to announce a new addition to the Space Child ecosystem:\n\n${category.toUpperCase()}\n${appName}\n${appDescription}\n\nExplore ${appName}: ${appUrl}\n\nExpanding consciousness, one app at a time.\n\nManage your email preferences: ${baseUrl}/dashboard?tab=settings`,
+    });
+    return true;
+  } catch (error) {
+    console.error("Failed to send new app notification:", error);
+    return false;
+  }
+}
+
+export async function sendPlatformUpdateEmail(
+  email: string,
+  firstName: string | null,
+  updateTitle: string,
+  updateContent: string
+): Promise<boolean> {
+  if (!transporter) {
+    console.log(`[DEV MODE] Platform update email for ${email}: ${updateTitle}`);
+    return true;
+  }
+
+  const name = firstName || "Explorer";
+  const appUrl = getAppUrl();
+
+  try {
+    await transporter.sendMail({
+      from: `"${APP_NAME}" <${FROM_EMAIL}>`,
+      to: email,
+      subject: `Space Child Update: ${updateTitle}`,
+      html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0a0a0f; color: #ffffff; margin: 0; padding: 20px; }
+    .container { max-width: 600px; margin: 0 auto; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); border-radius: 16px; padding: 40px; border: 1px solid rgba(255,255,255,0.1); }
+    h1 { color: #22d3ee; margin-bottom: 20px; font-size: 24px; text-shadow: 0 0 20px rgba(34, 211, 238, 0.5); }
+    p { line-height: 1.8; margin-bottom: 16px; color: #ffffff; text-shadow: 0 0 10px rgba(255, 255, 255, 0.3); font-size: 16px; }
+    .btn { display: inline-block; background: linear-gradient(135deg, #06b6d4 0%, #a855f7 100%); color: white; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; margin: 20px 0; box-shadow: 0 0 20px rgba(168, 85, 247, 0.4); }
+    .update-content { background: rgba(255,255,255,0.08); padding: 24px; border-radius: 12px; margin: 20px 0; border-left: 4px solid #22d3ee; }
+    .footer { margin-top: 30px; font-size: 13px; color: #cbd5e1; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px; }
+    .footer p { color: #cbd5e1; text-shadow: none; }
+    .unsubscribe { color: #94a3b8; font-size: 12px; }
+    .unsubscribe a { color: #94a3b8; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>${updateTitle}</h1>
+    <p>Hello ${name},</p>
+    
+    <div class="update-content">
+      ${updateContent}
+    </div>
+    
+    <p><a href="${appUrl}/dashboard" class="btn">Go to Dashboard</a></p>
+    
+    <div class="footer">
+      <p>Thank you for being part of Space Child.</p>
+      <p class="unsubscribe">You're receiving this because you subscribed to platform updates.<br>
+      <a href="${appUrl}/dashboard?tab=settings">Manage your email preferences</a></p>
+    </div>
+  </div>
+</body>
+</html>
+      `,
+      text: `${updateTitle}\n\nHello ${name},\n\n${updateContent.replace(/<[^>]*>/g, '')}\n\nGo to Dashboard: ${appUrl}/dashboard\n\nThank you for being part of Space Child.\n\nManage your email preferences: ${appUrl}/dashboard?tab=settings`,
+    });
+    return true;
+  } catch (error) {
+    console.error("Failed to send platform update email:", error);
+    return false;
+  }
+}

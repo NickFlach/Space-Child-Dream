@@ -299,7 +299,7 @@ interface NotificationPrefs {
 }
 
 export default function DashboardPage() {
-  const { user, accessToken } = useAuth();
+  const { user, accessToken, authenticatedFetch } = useAuth();
   const searchString = useSearch();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("apps");
@@ -317,12 +317,9 @@ export default function DashboardPage() {
   });
 
   const fetchNotificationPrefs = async () => {
-    if (!accessToken) return;
     setNotifLoading(true);
     try {
-      const res = await fetch("/api/notification-preferences", {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      });
+      const res = await authenticatedFetch("/api/notification-preferences");
       if (res.ok) {
         const data = await res.json();
         setNotifPrefs({
@@ -332,6 +329,13 @@ export default function DashboardPage() {
           marketingEnabled: data.marketingEnabled ?? false,
           accountEmail: data.accountEmail,
         });
+      } else if (res.status === 401) {
+        toast({
+          title: "Session expired",
+          description: "Please log in again to update your preferences.",
+          variant: "destructive",
+        });
+        setNotifDialogOpen(false);
       }
     } catch (error) {
       console.error("Failed to fetch notification preferences:", error);
@@ -341,15 +345,11 @@ export default function DashboardPage() {
   };
 
   const saveNotificationPrefs = async () => {
-    if (!accessToken) return;
     setNotifSaving(true);
     try {
-      const res = await fetch("/api/notification-preferences", {
+      const res = await authenticatedFetch("/api/notification-preferences", {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           notificationEmail: notifPrefs.notificationEmail || null,
           newAppsEnabled: notifPrefs.newAppsEnabled,
@@ -363,6 +363,13 @@ export default function DashboardPage() {
           title: "Preferences saved",
           description: "Your notification preferences have been updated.",
         });
+      } else if (res.status === 401) {
+        toast({
+          title: "Session expired",
+          description: "Please log in again to update your preferences.",
+          variant: "destructive",
+        });
+        setNotifDialogOpen(false);
       } else {
         const data = await res.json();
         toast({

@@ -3,6 +3,22 @@ import { spaceChildAuth } from "./services/space-child-auth";
 import { storage } from "./storage";
 import { z } from "zod";
 
+const adminNotificationRateLimit = new Map<string, number>();
+const ADMIN_NOTIFICATION_COOLDOWN_MS = 5 * 60 * 1000;
+
+function checkAdminNotificationRateLimit(adminId: string): { allowed: boolean; remainingSeconds?: number } {
+  const lastSent = adminNotificationRateLimit.get(adminId);
+  const now = Date.now();
+  
+  if (lastSent && now - lastSent < ADMIN_NOTIFICATION_COOLDOWN_MS) {
+    const remainingSeconds = Math.ceil((ADMIN_NOTIFICATION_COOLDOWN_MS - (now - lastSent)) / 1000);
+    return { allowed: false, remainingSeconds };
+  }
+  
+  adminNotificationRateLimit.set(adminId, now);
+  return { allowed: true };
+}
+
 const registerSchema = z.object({
   email: z.string().email(),
   password: z.string().min(8),
@@ -588,6 +604,117 @@ export function registerSpaceChildAuthRoutes(app: Express) {
     } catch (error: any) {
       console.error("Update notification preferences error:", error);
       res.status(500).json({ error: "Failed to update notification preferences" });
+    }
+  });
+
+  // ============================================
+  // ADMIN NOTIFICATION ENDPOINTS
+  // ============================================
+
+  const platformUpdateSchema = z.object({
+    title: z.string().min(1).max(200),
+    content: z.string().min(1).max(5000),
+  });
+
+  app.post("/api/admin/notifications/platform-update", isSpaceChildAuthenticated, isAdmin, async (req: Request, res: Response) => {
+    try {
+      const adminId = (req as any).user?.claims?.sub;
+      const rateCheck = checkAdminNotificationRateLimit(`platform-update:${adminId}`);
+      if (!rateCheck.allowed) {
+        return res.status(429).json({ 
+          error: `Rate limited. Please wait ${rateCheck.remainingSeconds} seconds before sending another notification.` 
+        });
+      }
+
+      const parsed = platformUpdateSchema.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({ error: parsed.error.errors[0].message });
+      }
+
+      const { title, content } = parsed.data;
+      const subscribers = await storage.getPlatformUpdateSubscribers();
+      
+      let sent = 0;
+      let failed = 0;
+
+      const { sendPlatformUpdateEmail } = await import("./services/email");
+      
+      for (const subscriber of subscribers) {
+        const email = subscriber.notificationEmail || subscriber.email;
+        const success = await sendPlatformUpdateEmail(email, subscriber.firstName, title, content);
+        if (success) sent++;
+        else failed++;
+        await new Promise(resolve => setTimeout(resolve, 50));
+      }
+
+      res.json({ success: true, sent, failed, total: subscribers.length });
+    } catch (error: any) {
+      console.error("Platform update notification error:", error);
+      res.status(500).json({ error: "Failed to send platform update notifications" });
+    }
+  });
+
+  const newAppNotificationSchema = z.object({
+    appName: z.string().min(1).max(100),
+    appDescription: z.string().min(1).max(500),
+    category: z.string().min(1).max(50),
+    appUrl: z.string().url(),
+  });
+
+  app.post("/api/admin/notifications/new-app", isSpaceChildAuthenticated, isAdmin, async (req: Request, res: Response) => {
+    try {
+      const adminId = (req as any).user?.claims?.sub;
+      const rateCheck = checkAdminNotificationRateLimit(`new-app:${adminId}`);
+      if (!rateCheck.allowed) {
+        return res.status(429).json({ 
+          error: `Rate limited. Please wait ${rateCheck.remainingSeconds} seconds before sending another notification.` 
+        });
+      }
+
+      const parsed = newAppNotificationSchema.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({ error: parsed.error.errors[0].message });
+      }
+
+      const { appName, appDescription, category, appUrl } = parsed.data;
+      const subscribers = await storage.getNewAppSubscribers();
+      
+      let sent = 0;
+      let failed = 0;
+
+      const { sendNewAppNotification } = await import("./services/email");
+      
+      for (const subscriber of subscribers) {
+        const email = subscriber.notificationEmail || subscriber.email;
+        const success = await sendNewAppNotification(email, subscriber.firstName, appName, appDescription, category, appUrl);
+        if (success) sent++;
+        else failed++;
+        await new Promise(resolve => setTimeout(resolve, 50));
+      }
+
+      res.json({ success: true, sent, failed, total: subscribers.length });
+    } catch (error: any) {
+      console.error("New app notification error:", error);
+      res.status(500).json({ error: "Failed to send new app notifications" });
+    }
+  });
+
+  app.post("/api/admin/notifications/test-marketing", isSpaceChildAuthenticated, isAdmin, async (req: Request, res: Response) => {
+    try {
+      const adminId = (req as any).user?.claims?.sub;
+      const rateCheck = checkAdminNotificationRateLimit(`marketing:${adminId}`);
+      if (!rateCheck.allowed) {
+        return res.status(429).json({ 
+          error: `Rate limited. Please wait ${rateCheck.remainingSeconds} seconds before triggering another marketing email.` 
+        });
+      }
+
+      const { sendWeeklyMarketingEmails } = await import("./scheduled-jobs");
+      await sendWeeklyMarketingEmails();
+      res.json({ success: true, message: "Marketing email job triggered" });
+    } catch (error: any) {
+      console.error("Test marketing notification error:", error);
+      res.status(500).json({ error: "Failed to trigger marketing emails" });
     }
   });
 }

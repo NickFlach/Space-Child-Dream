@@ -52,6 +52,22 @@ Space Child Dream is a consciousness exploration platform based on the mHC (Mani
 - Robots.txt at `/robots.txt`
 - OG meta endpoint at `/api/og/:slug`
 
+### Email Notification System (NEW - January 2026)
+- **Notification Preferences**: Users can configure email preferences in dashboard
+  - Separate notification email address (optional, defaults to account email)
+  - Toggle for new app announcements
+  - Toggle for platform updates
+  - Toggle for marketing emails
+- **Weekly Marketing Emails**: Automated via node-cron, Fridays 1pm UTC
+  - AI-generated content based on recent platform activity
+  - Pulls recent consciousness probes for inspiration
+- **Admin Notification Endpoints**:
+  - `POST /api/admin/notifications/platform-update` - Send platform update to subscribers
+  - `POST /api/admin/notifications/new-app` - Announce new app to subscribers
+  - `POST /api/admin/notifications/test-marketing` - Trigger marketing email job manually
+- **Token Auto-Refresh**: Frontend authenticatedFetch utility auto-refreshes expired tokens
+- Located in `server/services/email.ts`, `server/scheduled-jobs.ts`
+
 ### Security & Performance Improvements (January 2026)
 - **Token Logging Security**: Auth response logging now sanitizes sensitive fields (accessToken, refreshToken, password, zkSecret) using recursive redaction
 - **JWT Secret Enforcement**: Application fails fast in production if SESSION_SECRET is not set, removing predictable fallback
@@ -91,6 +107,7 @@ Space Child Dream is a consciousness exploration platform based on the mHC (Mani
 - `subscriptions` - Stripe subscription data
 - `usage_ledger` - Token usage tracking
 - `shared_visualizations` - Public share records
+- `notification_preferences` - User email notification settings
 
 ### Schema Location
 - `shared/schema.ts` - Drizzle schema definitions

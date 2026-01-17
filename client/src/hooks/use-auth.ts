@@ -122,6 +122,20 @@ async function logoutApi(accessToken: string | null): Promise<void> {
   });
 }
 
+async function refreshTokenApi(refreshToken: string): Promise<{ accessToken: string; refreshToken: string }> {
+  const response = await fetch("/api/space-child-auth/refresh", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ refreshToken }),
+  });
+
+  if (!response.ok) {
+    throw new Error("Token refresh failed");
+  }
+
+  return response.json();
+}
+
 export function useAuth() {
   const queryClient = useQueryClient();
   const { accessToken, refreshToken, setTokens, clearTokens } = useAuthStore();
@@ -162,11 +176,43 @@ export function useAuth() {
     },
   });
 
+  const refreshTokens = async (): Promise<string | null> => {
+    if (!refreshToken) return null;
+    try {
+      const newTokens = await refreshTokenApi(refreshToken);
+      setTokens(newTokens);
+      return newTokens.accessToken;
+    } catch (error) {
+      clearTokens();
+      return null;
+    }
+  };
+
+  const authenticatedFetch = async (url: string, options: RequestInit = {}): Promise<Response> => {
+    const headers = new Headers(options.headers);
+    if (accessToken) {
+      headers.set("Authorization", `Bearer ${accessToken}`);
+    }
+
+    let response = await fetch(url, { ...options, headers });
+
+    if (response.status === 401 && refreshToken) {
+      const newToken = await refreshTokens();
+      if (newToken) {
+        headers.set("Authorization", `Bearer ${newToken}`);
+        response = await fetch(url, { ...options, headers });
+      }
+    }
+
+    return response;
+  };
+
   return {
     user,
     isLoading,
     isAuthenticated: !!user && !!accessToken,
     accessToken,
+    refreshToken,
     login: loginMutation.mutateAsync,
     loginError: loginMutation.error?.message,
     isLoggingIn: loginMutation.isPending,
@@ -176,6 +222,8 @@ export function useAuth() {
     logout: logoutMutation.mutate,
     isLoggingOut: logoutMutation.isPending,
     refetch,
+    refreshTokens,
+    authenticatedFetch,
   };
 }
 

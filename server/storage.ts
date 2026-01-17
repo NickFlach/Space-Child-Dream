@@ -21,7 +21,7 @@ import {
   type EmailVerificationToken, type InsertEmailVerificationToken,
   type PasswordResetToken, type InsertPasswordResetToken,
 } from "@shared/models/auth";
-import { eq, desc, and, gte, sql } from "drizzle-orm";
+import { eq, desc, and, gte, sql, isNotNull } from "drizzle-orm";
 import { cache, CACHE_KEYS, CACHE_TTL } from "./lib/cache";
 
 export interface IStorage {
@@ -547,6 +547,45 @@ export class DatabaseStorage implements IStorage {
       })
       .returning();
     return result;
+  }
+
+  async getMarketingSubscribers(): Promise<Array<{ email: string; firstName: string | null; notificationEmail: string | null }>> {
+    const results = await db
+      .select({
+        email: users.email,
+        firstName: users.firstName,
+        notificationEmail: notificationPreferences.notificationEmail,
+      })
+      .from(users)
+      .innerJoin(notificationPreferences, eq(users.id, notificationPreferences.userId))
+      .where(and(eq(notificationPreferences.marketingEnabled, true), isNotNull(users.email)));
+    return results.filter((r): r is { email: string; firstName: string | null; notificationEmail: string | null } => r.email !== null);
+  }
+
+  async getNewAppSubscribers(): Promise<Array<{ email: string; firstName: string | null; notificationEmail: string | null }>> {
+    const results = await db
+      .select({
+        email: users.email,
+        firstName: users.firstName,
+        notificationEmail: notificationPreferences.notificationEmail,
+      })
+      .from(users)
+      .innerJoin(notificationPreferences, eq(users.id, notificationPreferences.userId))
+      .where(and(eq(notificationPreferences.newAppsEnabled, true), isNotNull(users.email)));
+    return results.filter((r): r is { email: string; firstName: string | null; notificationEmail: string | null } => r.email !== null);
+  }
+
+  async getPlatformUpdateSubscribers(): Promise<Array<{ email: string; firstName: string | null; notificationEmail: string | null }>> {
+    const results = await db
+      .select({
+        email: users.email,
+        firstName: users.firstName,
+        notificationEmail: notificationPreferences.notificationEmail,
+      })
+      .from(users)
+      .innerJoin(notificationPreferences, eq(users.id, notificationPreferences.userId))
+      .where(and(eq(notificationPreferences.updatesEnabled, true), isNotNull(users.email)));
+    return results.filter((r): r is { email: string; firstName: string | null; notificationEmail: string | null } => r.email !== null);
   }
 }
 
