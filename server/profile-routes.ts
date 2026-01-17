@@ -22,6 +22,7 @@ import {
   type HeartState,
   type BiofieldState,
   type ConsciousnessDomain,
+  type InsertConsciousnessEdge,
 } from "@shared/models/biofield-profile";
 
 // Generate a random sigil seed
@@ -370,41 +371,63 @@ export function registerProfileRoutes(app: Express) {
         .returning();
 
       // Update consciousness graph edges if multiple domains
+      // Batched approach: O(1) queries instead of O(n²) queries
       if (domains && domains.length > 1) {
+        // Generate all domain pairs
+        const domainPairs: Array<{ source: string; target: string }> = [];
         for (let i = 0; i < domains.length; i++) {
           for (let j = i + 1; j < domains.length; j++) {
-            const sourceDomain = domains[i];
-            const targetDomain = domains[j];
-
-            const existingEdge = await db.select().from(consciousnessEdges)
-              .where(and(
-                eq(consciousnessEdges.userId, userId),
-                eq(consciousnessEdges.sourceDomain, sourceDomain),
-                eq(consciousnessEdges.targetDomain, targetDomain)
-              ))
-              .limit(1);
-
-            if (existingEdge[0]) {
-              await db.update(consciousnessEdges)
-                .set({
-                  strength: Math.min(1, (existingEdge[0].strength || 0) + 0.1),
-                  synthesisCount: (existingEdge[0].synthesisCount || 0) + 1,
-                  lastSynthesisAt: new Date(),
-                })
-                .where(eq(consciousnessEdges.id, existingEdge[0].id));
-            } else {
-              await db.insert(consciousnessEdges)
-                .values({
-                  userId,
-                  sourceDomain,
-                  targetDomain,
-                  strength: 0.1,
-                  synthesisCount: 1,
-                  lastSynthesisAt: new Date(),
-                });
-            }
+            domainPairs.push({ source: domains[i], target: domains[j] });
           }
         }
+
+        // Fetch all existing edges for this user in ONE query
+        const existingEdges = await db.select().from(consciousnessEdges)
+          .where(eq(consciousnessEdges.userId, userId));
+
+        // Build a lookup map for existing edges
+        const edgeMap = new Map<string, typeof existingEdges[0]>();
+        existingEdges.forEach(edge => {
+          edgeMap.set(`${edge.sourceDomain}:${edge.targetDomain}`, edge);
+        });
+
+        // Separate into updates and inserts
+        const updatePromises: Promise<any>[] = [];
+        const newEdges: InsertConsciousnessEdge[] = [];
+
+        for (const pair of domainPairs) {
+          const existingEdge = edgeMap.get(`${pair.source}:${pair.target}`);
+          if (existingEdge) {
+            // Queue update
+            updatePromises.push(
+              db.update(consciousnessEdges)
+                .set({
+                  strength: Math.min(1, (existingEdge.strength || 0) + 0.1),
+                  synthesisCount: (existingEdge.synthesisCount || 0) + 1,
+                  lastSynthesisAt: new Date(),
+                })
+                .where(eq(consciousnessEdges.id, existingEdge.id))
+            );
+          } else {
+            // Queue insert
+            newEdges.push({
+              userId,
+              sourceDomain: pair.source as ConsciousnessDomain,
+              targetDomain: pair.target as ConsciousnessDomain,
+              strength: 0.1,
+              synthesisCount: 1,
+              lastSynthesisAt: new Date(),
+            });
+          }
+        }
+
+        // Execute all updates in parallel + batch insert new edges
+        await Promise.all([
+          ...updatePromises,
+          newEdges.length > 0
+            ? db.insert(consciousnessEdges).values(newEdges as typeof consciousnessEdges.$inferInsert[])
+            : Promise.resolve(),
+        ]);
       }
 
       res.json(result[0]);

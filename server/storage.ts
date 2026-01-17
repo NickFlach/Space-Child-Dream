@@ -34,6 +34,7 @@ export interface IStorage {
   // Thoughts
   getThought(id: number): Promise<Thought | undefined>;
   getThoughtsByUser(userId: string, limit?: number): Promise<Thought[]>;
+  getThoughtsCountByUser(userId: string): Promise<number>;
   getThoughtsByUserPaginated(userId: string, limit: number, cursor?: number): Promise<{ items: Thought[]; nextCursor?: number }>;
   getThoughtByShareSlug(slug: string): Promise<Thought | undefined>;
   createThought(thought: InsertThought): Promise<Thought>;
@@ -122,6 +123,13 @@ export class DatabaseStorage implements IStorage {
 
   async getThoughtsByUser(userId: string, limit = 50): Promise<Thought[]> {
     return db.select().from(thoughts).where(eq(thoughts.userId, userId)).orderBy(desc(thoughts.createdAt)).limit(limit);
+  }
+
+  async getThoughtsCountByUser(userId: string): Promise<number> {
+    const result = await db.select({ count: sql<number>`count(*)` })
+      .from(thoughts)
+      .where(eq(thoughts.userId, userId));
+    return Number(result[0]?.count || 0);
   }
 
   async getThoughtsByUserPaginated(userId: string, limit: number, cursor?: number): Promise<{ items: Thought[]; nextCursor?: number }> {
