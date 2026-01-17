@@ -74,10 +74,10 @@ interface CategoryInfo {
 const APP_CATEGORIES: CategoryInfo[] = [
   {
     id: "art",
-    name: "Art",
+    name: "Art & Music",
     icon: <ArtSigil className="w-5 h-5" />,
     color: "from-pink-500 to-rose-500",
-    description: "Where consciousness meets canvas. Create, explore, and express through AI-powered artistic experiences.",
+    description: "Where consciousness meets canvas and sound. Create, explore, and express through AI-powered artistic and musical experiences.",
     heroPattern: "radial-gradient(ellipse at 30% 20%, rgba(236,72,153,0.3) 0%, transparent 50%), radial-gradient(ellipse at 70% 80%, rgba(244,63,94,0.2) 0%, transparent 50%), linear-gradient(135deg, rgba(236,72,153,0.1) 0%, rgba(244,63,94,0.1) 100%)",
     apps: [
       {
@@ -88,6 +88,15 @@ const APP_CATEGORIES: CategoryInfo[] = [
         status: "active",
         ogImage: "https://vibe.spacechild.love/og-image.png",
         favicon: "https://vibe.spacechild.love/favicon.png",
+      },
+      {
+        id: "audionoise",
+        name: "Audio Noise",
+        description: "Immersive soundscapes and generative audio experiences. Explore cosmic frequencies and AI-crafted sonic landscapes.",
+        url: "https://audionoise.spacechild.love",
+        status: "active",
+        ogImage: "https://audionoise.spacechild.love/og-image.png",
+        favicon: "https://audionoise.spacechild.love/favicon.png",
       },
     ],
   },
