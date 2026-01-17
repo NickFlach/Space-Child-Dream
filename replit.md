@@ -133,6 +133,25 @@ Space Child Dream is a consciousness exploration platform based on the mHC (Mani
 - Space/neural network visual motifs
 - Scientific/research-oriented language
 
+## Design System Rules
+
+### Glassmorphic Buttons (REQUIRED)
+All buttons in the application MUST use the glassmorphic style:
+- Semi-transparent purple/violet background (`bg-purple-500/20`)
+- Backdrop blur effect (`backdrop-blur-xl`)
+- Subtle purple border with transparency (`border-purple-400/30`)
+- Large border radius (`rounded-2xl`)
+- Inset highlight for depth (`inset_0_1px_0_rgba(255,255,255,0.1)`)
+- Outer glow on hover (`0_0_30px_rgba(168,85,247,0.25)`)
+- Scale down slightly on active (`active:scale-[0.98]`)
+
+Use the Button component from `@/components/ui/button` - all variants now follow this style.
+- `default` / `glass`: Primary purple glassmorphic
+- `secondary`: Cyan glassmorphic  
+- `destructive`: Red glassmorphic
+- `outline`: Neutral white/transparent glassmorphic
+- `ghost`: Minimal transparent with hover reveal
+
 ## Running the Application
 ```bash
 npm run dev      # Development server
