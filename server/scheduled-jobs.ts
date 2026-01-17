@@ -14,6 +14,11 @@ function getOpenAIClient(): OpenAI | null {
 }
 
 function getAppUrl(): string {
+  // Production always uses spacechild.love
+  if (process.env.NODE_ENV === "production") {
+    return process.env.APP_URL || "https://spacechild.love";
+  }
+  // Development uses the dev domain
   if (process.env.REPLIT_DEV_DOMAIN) {
     return `https://${process.env.REPLIT_DEV_DOMAIN}`;
   }

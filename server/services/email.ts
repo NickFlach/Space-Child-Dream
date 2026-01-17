@@ -8,11 +8,18 @@ const FROM_EMAIL = process.env.FROM_EMAIL || "noreply@spacechild.io";
 const APP_NAME = "Space Child Dream";
 
 function getAppUrl(): string {
+  // Production always uses spacechild.love
+  if (process.env.NODE_ENV === "production") {
+    return process.env.APP_URL || "https://spacechild.love";
+  }
+  // Development uses the dev domain
   if (process.env.REPLIT_DEV_DOMAIN) {
     return `https://${process.env.REPLIT_DEV_DOMAIN}`;
   }
   return process.env.APP_URL || "http://localhost:5000";
 }
+
+const MASCOT_IMAGE_URL = "https://spacechild.love/mascot-email.png";
 
 function createTransporter() {
   if (!SMTP_HOST || !SMTP_USER || !SMTP_PASS) {
@@ -250,35 +257,52 @@ export async function sendMarketingEmail(
 <html>
 <head>
   <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0a0a0f; color: #ffffff; margin: 0; padding: 20px; }
-    .container { max-width: 600px; margin: 0 auto; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); border-radius: 16px; padding: 40px; border: 1px solid rgba(255,255,255,0.1); }
-    h1 { color: #22d3ee; margin-bottom: 20px; font-size: 24px; text-shadow: 0 0 20px rgba(34, 211, 238, 0.5); }
-    h2 { color: #a855f7; font-size: 18px; margin-top: 30px; text-shadow: 0 0 15px rgba(168, 85, 247, 0.5); }
-    p { line-height: 1.8; margin-bottom: 16px; color: #ffffff; text-shadow: 0 0 10px rgba(255, 255, 255, 0.3); font-size: 16px; }
-    .btn { display: inline-block; background: linear-gradient(135deg, #06b6d4 0%, #a855f7 100%); color: white; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; margin: 20px 0; box-shadow: 0 0 20px rgba(168, 85, 247, 0.4); }
-    .highlight-item { background: rgba(255,255,255,0.08); padding: 12px 16px; border-radius: 8px; margin: 8px 0; border-left: 3px solid #22d3ee; }
-    .bullet { color: #a855f7; margin-right: 8px; }
-    .footer { margin-top: 30px; font-size: 13px; color: #cbd5e1; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px; }
-    .footer p { color: #cbd5e1; text-shadow: none; }
-    .unsubscribe { color: #94a3b8; font-size: 12px; }
-    .unsubscribe a { color: #94a3b8; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: #0a0a0f; color: #e2e8f0; margin: 0; padding: 24px; line-height: 1.6; }
+    .container { max-width: 560px; margin: 0 auto; background: linear-gradient(180deg, #1a1a2e 0%, #0f0f1a 100%); border-radius: 20px; padding: 0; border: 1px solid rgba(34, 211, 238, 0.2); overflow: hidden; }
+    .header { background: linear-gradient(135deg, rgba(6, 182, 212, 0.15) 0%, rgba(168, 85, 247, 0.15) 100%); padding: 32px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.05); }
+    .mascot { width: 80px; height: 80px; margin-bottom: 16px; }
+    .brand { color: #22d3ee; font-size: 14px; letter-spacing: 2px; text-transform: uppercase; margin: 0; }
+    .content { padding: 32px 40px; }
+    h1 { color: #ffffff; margin: 0 0 24px 0; font-size: 26px; font-weight: 600; line-height: 1.3; }
+    p { margin: 0 0 20px 0; color: #cbd5e1; font-size: 16px; line-height: 1.7; }
+    .greeting { color: #a855f7; font-weight: 500; }
+    .highlights { margin: 28px 0; }
+    .highlight-item { background: rgba(34, 211, 238, 0.08); padding: 16px 20px; border-radius: 12px; margin: 12px 0; border-left: 3px solid #22d3ee; }
+    .highlight-item p { margin: 0; color: #e2e8f0; font-size: 15px; }
+    .bullet { color: #a855f7; margin-right: 10px; font-size: 12px; }
+    .cta-section { text-align: center; padding: 8px 0 16px; }
+    .btn { display: inline-block; background: linear-gradient(135deg, #06b6d4 0%, #a855f7 100%); color: white !important; padding: 16px 40px; text-decoration: none; border-radius: 30px; font-weight: 600; font-size: 15px; box-shadow: 0 4px 24px rgba(168, 85, 247, 0.35); }
+    .footer { background: rgba(0,0,0,0.3); padding: 24px 40px; text-align: center; }
+    .footer p { color: #64748b; font-size: 13px; margin: 0 0 12px 0; }
+    .footer a { color: #22d3ee; text-decoration: none; }
+    .signoff { color: #94a3b8; font-style: italic; }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>${content.headline}</h1>
-    <p>Hello ${name},</p>
-    <p>Here's what's happening in the Space Child ecosystem this week:</p>
-    
-    ${highlightsHtml}
-    
-    <p style="margin-top: 24px;"><a href="${content.cta.url}" class="btn">${content.cta.text}</a></p>
-    
+    <div class="header">
+      <img src="${MASCOT_IMAGE_URL}" alt="Space Child" class="mascot" onerror="this.style.display='none'">
+      <p class="brand">Space Child</p>
+    </div>
+    <div class="content">
+      <h1>${content.headline}</h1>
+      <p><span class="greeting">Hello ${name},</span></p>
+      <p>Here's what's happening in the Space Child ecosystem this week:</p>
+      
+      <div class="highlights">
+        ${highlightsHtml}
+      </div>
+      
+      <div class="cta-section">
+        <a href="${content.cta.url}" class="btn">${content.cta.text}</a>
+      </div>
+    </div>
     <div class="footer">
-      <p>Stay curious, stay conscious.</p>
-      <p class="unsubscribe">You're receiving this because you subscribed to marketing updates.<br>
-      <a href="${appUrl}/dashboard?tab=settings">Manage your email preferences</a></p>
+      <p class="signoff">Stay curious, stay conscious.</p>
+      <p>You're receiving this because you subscribed to marketing updates.<br>
+      <a href="${appUrl}/dashboard?tab=settings">Manage preferences</a></p>
     </div>
   </div>
 </body>
