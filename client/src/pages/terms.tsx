@@ -512,7 +512,7 @@ export default function TermsPage() {
             <Link href="/terms">
               <a className="hover:text-cyan-400 transition-colors">Terms of Service</a>
             </Link>
-            <a href="https://trakkr.ai/r/nick" target="_blank" rel="noopener noreferrer" className="hover:text-cyan-400 transition-colors">
+            <a href="https://trakkr.ai/?ref=nick" target="_blank" rel="noopener noreferrer" className="hover:text-cyan-400 transition-colors">
               Trakkr
             </a>
           </div>

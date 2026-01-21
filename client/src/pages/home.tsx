@@ -155,7 +155,7 @@ export default function HomePage() {
           <Link href="/terms" className="hover:text-cyan-400 transition-colors">
             Terms
           </Link>
-          <a href="https://trakkr.ai/r/nick" target="_blank" rel="noopener noreferrer" className="hover:text-cyan-400 transition-colors">
+          <a href="https://trakkr.ai/?ref=nick" target="_blank" rel="noopener noreferrer" className="hover:text-cyan-400 transition-colors">
             Trakkr
           </a>
         </div>
