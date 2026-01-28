@@ -137,16 +137,34 @@ export default function HomePage() {
               >
                 <motion.div
                   animate={{ 
-                    scale: [1, 1.1, 1],
+                    scale: [1, 1.2, 1],
+                    rotate: [0, 10, -10, 0],
+                    filter: [
+                      "drop-shadow(0 0 0px rgba(255,255,255,0))",
+                      "drop-shadow(0 0 15px rgba(255,255,255,0.8))",
+                      "drop-shadow(0 0 0px rgba(255,255,255,0))"
+                    ]
                   }}
                   transition={{ 
-                    duration: 3, 
+                    duration: 4, 
                     repeat: Infinity, 
                     ease: "easeInOut" 
                   }}
-                  className="mr-3"
+                  className="mr-3 relative"
                 >
                   <img src="/favicon.png" alt="Icon" className="w-8 h-8 object-contain" />
+                  <motion.div
+                    className="absolute inset-0 bg-white/20 blur-xl rounded-full"
+                    animate={{
+                      scale: [1, 2, 1],
+                      opacity: [0, 0.5, 0],
+                    }}
+                    transition={{
+                      duration: 4,
+                      repeat: Infinity,
+                      ease: "easeInOut"
+                    }}
+                  />
                 </motion.div>
                 <span className="relative z-10">Enter the Neural Interface</span>
                 <motion.div
