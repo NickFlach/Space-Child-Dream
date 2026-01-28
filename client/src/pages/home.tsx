@@ -137,17 +137,16 @@ export default function HomePage() {
               >
                 <motion.div
                   animate={{ 
-                    rotate: 360,
-                    scale: [1, 1.2, 1],
+                    scale: [1, 1.1, 1],
                   }}
                   transition={{ 
-                    duration: 4, 
+                    duration: 3, 
                     repeat: Infinity, 
-                    ease: "linear" 
+                    ease: "easeInOut" 
                   }}
                   className="mr-3"
                 >
-                  <Atom className="w-6 h-6 text-cyan-400" />
+                  <img src="/favicon.png" alt="Icon" className="w-8 h-8 object-contain" />
                 </motion.div>
                 <span className="relative z-10">Enter the Neural Interface</span>
                 <motion.div
