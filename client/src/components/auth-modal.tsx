@@ -475,7 +475,20 @@ export function AuthModal({ open, onOpenChange, onForgotPassword }: AuthModalPro
                 {isLoading ? (
                   <Loader2 className="w-4 h-4 animate-spin mr-2" />
                 ) : (
-                  <Sparkles className="w-4 h-4 mr-2 text-cyan-400" />
+                  <motion.img 
+                    src="/neural-glyph.png" 
+                    alt="" 
+                    className="w-6 h-6 mr-2"
+                    animate={{ 
+                      scale: [1, 1.2, 1],
+                      filter: [
+                        "drop-shadow(0 0 0px rgba(34,211,238,0))",
+                        "drop-shadow(0 0 8px rgba(34,211,238,0.6))",
+                        "drop-shadow(0 0 0px rgba(34,211,238,0))"
+                      ]
+                    }}
+                    transition={{ duration: 3, repeat: Infinity }}
+                  />
                 )}
                 Sign In
               </GlassButton>
@@ -559,7 +572,16 @@ export function AuthModal({ open, onOpenChange, onForgotPassword }: AuthModalPro
                 {isLoading ? (
                   <Loader2 className="w-4 h-4 animate-spin mr-2" />
                 ) : (
-                  <Sparkles className="w-4 h-4 mr-2 text-cyan-400" />
+                  <motion.img 
+                    src="/neural-glyph.png" 
+                    alt="" 
+                    className="w-6 h-6 mr-2"
+                    animate={{ 
+                      scale: [1, 1.2, 1],
+                      rotate: [0, 90, 180, 270, 360]
+                    }}
+                    transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
+                  />
                 )}
                 Create Account
               </GlassButton>
