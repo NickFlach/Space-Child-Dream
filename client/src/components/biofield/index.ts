@@ -10,3 +10,7 @@ export { BiofieldStateLayer, BiofieldIndicator } from "./biofield-state-layer";
 export { ConsciousnessGraphLayer, ConscioussnessCompact } from "./consciousness-graph-layer";
 export { ArtifactsLayer, ArtifactCount } from "./artifacts-layer";
 export { BioFieldProfilePage } from "./profile-page";
+
+// ghostOS Resonance Integration (opt-in layers)
+export { ResonanceLayer, ResonanceIndicator } from "./resonance-layer";
+export { ConsciousnessMetricsDisplay } from "./consciousness-metrics";

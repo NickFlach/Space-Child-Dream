@@ -6,7 +6,7 @@ import { GlitchText } from "@/components/glitch-text";
 import { UserNav } from "@/components/user-nav";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
-import { Sparkles } from "lucide-react";
+import { Sparkles, Atom } from "lucide-react";
 import { useState } from "react";
 import { AuthModal } from "@/components/auth-modal";
 import { useLocation, Link } from "wouter";
@@ -132,11 +132,44 @@ export default function HomePage() {
               </p>
               <Button 
                 onClick={() => setAuthModalOpen(true)}
-                className="bg-white hover:bg-white/90 text-black text-lg px-8 py-6 h-auto shadow-[0_0_20px_rgba(255,255,255,0.5)] transition-all hover:shadow-[0_0_30px_rgba(255,255,255,0.7)]"
+                className="bg-white/10 hover:bg-white/20 text-white backdrop-blur-md border border-white/20 text-lg px-8 py-6 h-auto shadow-[0_0_20px_rgba(255,255,255,0.1)] transition-all hover:shadow-[0_0_30px_rgba(255,255,255,0.2)] group"
                 data-testid="button-enter"
               >
-                <Sparkles className="w-5 h-5 mr-2" />
-                Enter the Neural Interface
+                <motion.div
+                  animate={{ 
+                    scale: [1, 1.2, 1],
+                    rotate: [0, 10, -10, 0],
+                    filter: [
+                      "drop-shadow(0 0 0px rgba(255,255,255,0))",
+                      "drop-shadow(0 0 15px rgba(255,255,255,0.8))",
+                      "drop-shadow(0 0 0px rgba(255,255,255,0))"
+                    ]
+                  }}
+                  transition={{ 
+                    duration: 4, 
+                    repeat: Infinity, 
+                    ease: "easeInOut" 
+                  }}
+                  className="mr-3 relative"
+                >
+                  <img src="/icon-512.png" alt="Icon" className="w-8 h-8 object-contain" />
+                  <motion.div
+                    className="absolute inset-0 bg-white/20 blur-xl rounded-full"
+                    animate={{
+                      scale: [1, 2, 1],
+                      opacity: [0, 0.5, 0],
+                    }}
+                    transition={{
+                      duration: 4,
+                      repeat: Infinity,
+                      ease: "easeInOut"
+                    }}
+                  />
+                </motion.div>
+                <span className="relative z-10">Enter the Neural Interface</span>
+                <motion.div
+                  className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"
+                />
               </Button>
             </motion.div>
           </motion.section>
@@ -155,6 +188,9 @@ export default function HomePage() {
           <Link href="/terms" className="hover:text-cyan-400 transition-colors">
             Terms
           </Link>
+          <a href="https://trakkr.ai/?ref=nick" target="_blank" rel="noopener noreferrer" className="hover:text-cyan-400 transition-colors">
+            Trakkr
+          </a>
         </div>
       </footer>
     </div>

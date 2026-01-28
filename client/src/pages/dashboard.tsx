@@ -202,6 +202,15 @@ const APP_CATEGORIES: CategoryInfo[] = [
         ogImage: "https://ide.spacechild.love/og-image.png",
         favicon: "https://ide.spacechild.love/favicon.svg",
       },
+      {
+        id: "spacechild-dev",
+        name: "SpaceChild Dev",
+        description: "Development environment for the Space Child ecosystem. Build, test, and deploy consciousness-aware applications.",
+        url: "https://dev.spacechild.love",
+        status: "active",
+        ogImage: "https://dev.spacechild.love/og-image.png",
+        favicon: "https://dev.spacechild.love/favicon.png",
+      },
     ],
   },
   {
