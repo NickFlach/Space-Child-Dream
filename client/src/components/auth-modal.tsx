@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Sparkles, Loader2, Eye, EyeOff, Mail, CheckCircle } from "lucide-react";
+import { motion } from "framer-motion";
 import logoImage from "@assets/IMG_20251007_202557_1766540112397_1767322345816.png";
 
 interface AuthModalProps {
@@ -21,6 +22,37 @@ interface AuthModalProps {
 }
 
 type ModalView = "auth" | "verification-pending" | "forgot-password" | "forgot-sent";
+
+const GlassButton = ({ 
+  children, 
+  onClick, 
+  disabled, 
+  type = "button", 
+  testId,
+  className = ""
+}: { 
+  children: React.ReactNode; 
+  onClick?: () => void; 
+  disabled?: boolean; 
+  type?: "button" | "submit";
+  testId: string;
+  className?: string;
+}) => (
+  <Button 
+    type={type}
+    onClick={onClick}
+    disabled={disabled}
+    className={`bg-white/10 hover:bg-white/20 text-white backdrop-blur-md border border-white/20 shadow-[0_0_20px_rgba(255,255,255,0.05)] transition-all hover:shadow-[0_0_30px_rgba(255,255,255,0.1)] group relative overflow-hidden ${className}`}
+    data-testid={testId}
+  >
+    <span className="relative z-10 flex items-center justify-center">
+      {children}
+    </span>
+    <motion.div
+      className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"
+    />
+  </Button>
+);
 
 const PasswordInput = ({ 
   id, 
@@ -46,7 +78,7 @@ const PasswordInput = ({
       placeholder={placeholder}
       value={value}
       onChange={onChange}
-      className="bg-slate-800 border-white/10 text-white pr-10"
+      className="bg-white/5 border-white/10 text-white pr-10 focus:border-cyan-500/50 focus:ring-0 transition-colors"
       required
       minLength={8}
       data-testid={testId}
@@ -54,7 +86,7 @@ const PasswordInput = ({
     <button
       type="button"
       onClick={onToggle}
-      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
+      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
       data-testid={`${testId}-toggle`}
     >
       {show ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -189,7 +221,7 @@ export function AuthModal({ open, onOpenChange, onForgotPassword }: AuthModalPro
   if (view === "verification-pending") {
     return (
       <Dialog open={open} onOpenChange={handleOpenChange}>
-        <DialogContent className="sm:max-w-[425px] bg-slate-900 border-white/10">
+        <DialogContent className="sm:max-w-[425px] bg-black/80 backdrop-blur-xl border-white/10 text-white">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-white">
               <Mail className="w-5 h-5 text-cyan-400" />
@@ -204,7 +236,7 @@ export function AuthModal({ open, onOpenChange, onForgotPassword }: AuthModalPro
             <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-cyan-500/20 flex items-center justify-center">
               <Mail className="w-8 h-8 text-cyan-400" />
             </div>
-            <p className="text-white mb-2">Check your inbox</p>
+            <p className="text-white mb-2 font-medium">Check your inbox</p>
             <p className="text-gray-400 text-sm mb-4">
               We sent a verification link to<br />
               <span className="text-cyan-400">{pendingEmail}</span>
@@ -217,25 +249,24 @@ export function AuthModal({ open, onOpenChange, onForgotPassword }: AuthModalPro
               <p className="text-red-400 text-sm mb-4" data-testid="text-auth-error">{displayError}</p>
             )}
             
-            <Button
-              variant="outline"
+            <GlassButton
               onClick={handleResendVerification}
               disabled={isResending}
-              className="border-white/10 text-gray-300 hover:bg-slate-800"
-              data-testid="button-resend-verification"
+              className="w-full py-4"
+              testId="button-resend-verification"
             >
               {isResending ? (
                 <Loader2 className="w-4 h-4 animate-spin mr-2" />
               ) : null}
               Resend verification email
-            </Button>
+            </GlassButton>
           </div>
           
           <div className="border-t border-white/10 pt-4">
             <Button
               variant="ghost"
               onClick={() => { resetForm(); setView("auth"); }}
-              className="w-full text-gray-400 hover:text-white"
+              className="w-full text-gray-400 hover:text-white hover:bg-white/5"
               data-testid="button-back-to-login"
             >
               Back to login
@@ -250,10 +281,10 @@ export function AuthModal({ open, onOpenChange, onForgotPassword }: AuthModalPro
   if (view === "forgot-password") {
     return (
       <Dialog open={open} onOpenChange={handleOpenChange}>
-        <DialogContent className="sm:max-w-[425px] bg-slate-900 border-white/10">
+        <DialogContent className="sm:max-w-[425px] bg-black/80 backdrop-blur-xl border-white/10 text-white">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-white">
-              <img src={logoImage} alt="Space Child" className="w-6 h-6 rounded mix-blend-screen" />
+              <img src="/icon-512.png" alt="Space Child" className="w-6 h-6 object-contain" />
               Reset Password
             </DialogTitle>
             <DialogDescription className="text-gray-400">
@@ -270,7 +301,7 @@ export function AuthModal({ open, onOpenChange, onForgotPassword }: AuthModalPro
                 placeholder="consciousness@spacechild.io"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="bg-slate-800 border-white/10 text-white"
+                className="bg-white/5 border-white/10 text-white focus:border-cyan-500/50 focus:ring-0 transition-colors"
                 required
                 data-testid="input-forgot-email"
               />
@@ -280,11 +311,11 @@ export function AuthModal({ open, onOpenChange, onForgotPassword }: AuthModalPro
               <p className="text-red-400 text-sm" data-testid="text-auth-error">{displayError}</p>
             )}
             
-            <Button
+            <GlassButton
               type="submit"
-              className="w-full bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-600 hover:to-purple-600"
+              className="w-full py-6"
               disabled={isSendingReset}
-              data-testid="button-send-reset"
+              testId="button-send-reset"
             >
               {isSendingReset ? (
                 <Loader2 className="w-4 h-4 animate-spin mr-2" />
@@ -292,14 +323,14 @@ export function AuthModal({ open, onOpenChange, onForgotPassword }: AuthModalPro
                 <Mail className="w-4 h-4 mr-2" />
               )}
               Send Reset Link
-            </Button>
+            </GlassButton>
           </form>
           
           <div className="border-t border-white/10 pt-4">
             <Button
               variant="ghost"
               onClick={() => { setError(null); setView("auth"); }}
-              className="w-full text-gray-400 hover:text-white"
+              className="w-full text-gray-400 hover:text-white hover:bg-white/5"
               data-testid="button-back-to-login"
             >
               Back to login
@@ -314,7 +345,7 @@ export function AuthModal({ open, onOpenChange, onForgotPassword }: AuthModalPro
   if (view === "forgot-sent") {
     return (
       <Dialog open={open} onOpenChange={handleOpenChange}>
-        <DialogContent className="sm:max-w-[425px] bg-slate-900 border-white/10">
+        <DialogContent className="sm:max-w-[425px] bg-black/80 backdrop-blur-xl border-white/10 text-white">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-white">
               <CheckCircle className="w-5 h-5 text-green-400" />
@@ -326,7 +357,7 @@ export function AuthModal({ open, onOpenChange, onForgotPassword }: AuthModalPro
             <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-green-500/20 flex items-center justify-center">
               <Mail className="w-8 h-8 text-green-400" />
             </div>
-            <p className="text-white mb-2">Reset link sent!</p>
+            <p className="text-white mb-2 font-medium">Reset link sent!</p>
             <p className="text-gray-400 text-sm mb-4">
               If an account exists with <span className="text-cyan-400">{email}</span>,<br />
               you'll receive a password reset link shortly.
@@ -340,7 +371,7 @@ export function AuthModal({ open, onOpenChange, onForgotPassword }: AuthModalPro
             <Button
               variant="ghost"
               onClick={() => { resetForm(); }}
-              className="w-full text-gray-400 hover:text-white"
+              className="w-full text-gray-400 hover:text-white hover:bg-white/5"
               data-testid="button-back-to-login"
             >
               Back to login
@@ -354,11 +385,23 @@ export function AuthModal({ open, onOpenChange, onForgotPassword }: AuthModalPro
   // Main auth view
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-[425px] bg-slate-900 border-white/10">
+      <DialogContent className="sm:max-w-[425px] bg-black/80 backdrop-blur-xl border-white/10 text-white shadow-2xl">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-white">
-            <img src={logoImage} alt="Space Child" className="w-6 h-6 rounded mix-blend-screen" />
-            Space Child Auth
+          <DialogTitle className="flex items-center gap-3 text-white">
+            <motion.div
+              animate={{ 
+                scale: [1, 1.1, 1],
+                rotate: [0, 5, -5, 0]
+              }}
+              transition={{ 
+                duration: 4, 
+                repeat: Infinity, 
+                ease: "easeInOut" 
+              }}
+            >
+              <img src="/icon-512.png" alt="Space Child" className="w-8 h-8 object-contain" />
+            </motion.div>
+            <span className="font-display tracking-tight">Space Child Auth</span>
           </DialogTitle>
           <DialogDescription className="text-gray-400">
             Secure authentication powered by zero-knowledge proofs
@@ -366,16 +409,24 @@ export function AuthModal({ open, onOpenChange, onForgotPassword }: AuthModalPro
         </DialogHeader>
 
         <Tabs value={tab} onValueChange={(v) => { setTab(v as "login" | "register"); setError(null); }}>
-          <TabsList className="grid w-full grid-cols-2 bg-slate-800">
-            <TabsTrigger value="login" className="data-[state=active]:bg-cyan-500/20" data-testid="tab-login">
+          <TabsList className="grid w-full grid-cols-2 bg-white/5 border border-white/10 p-1">
+            <TabsTrigger 
+              value="login" 
+              className="data-[state=active]:bg-white/10 data-[state=active]:text-white text-gray-400 transition-all" 
+              data-testid="tab-login"
+            >
               Sign In
             </TabsTrigger>
-            <TabsTrigger value="register" className="data-[state=active]:bg-cyan-500/20" data-testid="tab-register">
+            <TabsTrigger 
+              value="register" 
+              className="data-[state=active]:bg-white/10 data-[state=active]:text-white text-gray-400 transition-all" 
+              data-testid="tab-register"
+            >
               Create Account
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="login" className="space-y-4 mt-4">
+          <TabsContent value="login" className="space-y-4 mt-6">
             <form onSubmit={handleLogin} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="login-email" className="text-gray-300">Email</Label>
@@ -385,7 +436,7 @@ export function AuthModal({ open, onOpenChange, onForgotPassword }: AuthModalPro
                   placeholder="consciousness@spacechild.io"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="bg-slate-800 border-white/10 text-white"
+                  className="bg-white/5 border-white/10 text-white focus:border-cyan-500/50 focus:ring-0 transition-colors"
                   required
                   data-testid="input-login-email"
                 />
@@ -405,7 +456,7 @@ export function AuthModal({ open, onOpenChange, onForgotPassword }: AuthModalPro
               <button
                 type="button"
                 onClick={() => { setError(null); setView("forgot-password"); }}
-                className="text-sm text-cyan-400 hover:text-cyan-300 transition-colors"
+                className="text-sm text-cyan-400/80 hover:text-cyan-400 transition-colors"
                 data-testid="link-forgot-password"
               >
                 Forgot password?
@@ -414,23 +465,24 @@ export function AuthModal({ open, onOpenChange, onForgotPassword }: AuthModalPro
               {displayError && (
                 <p className="text-red-400 text-sm" data-testid="text-auth-error">{displayError}</p>
               )}
-              <Button
+              
+              <GlassButton
                 type="submit"
-                className="w-full bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-600 hover:to-purple-600"
+                className="w-full py-6"
                 disabled={isLoading}
-                data-testid="button-login-submit"
+                testId="button-login-submit"
               >
                 {isLoading ? (
                   <Loader2 className="w-4 h-4 animate-spin mr-2" />
                 ) : (
-                  <Sparkles className="w-4 h-4 mr-2" />
+                  <Sparkles className="w-4 h-4 mr-2 text-cyan-400" />
                 )}
                 Sign In
-              </Button>
+              </GlassButton>
             </form>
           </TabsContent>
 
-          <TabsContent value="register" className="space-y-4 mt-4">
+          <TabsContent value="register" className="space-y-4 mt-6">
             <form onSubmit={handleRegister} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -441,7 +493,7 @@ export function AuthModal({ open, onOpenChange, onForgotPassword }: AuthModalPro
                     placeholder="Space"
                     value={firstName}
                     onChange={(e) => setFirstName(e.target.value)}
-                    className="bg-slate-800 border-white/10 text-white"
+                    className="bg-white/5 border-white/10 text-white focus:border-cyan-500/50 focus:ring-0 transition-colors"
                     data-testid="input-register-firstName"
                   />
                 </div>
@@ -453,7 +505,7 @@ export function AuthModal({ open, onOpenChange, onForgotPassword }: AuthModalPro
                     placeholder="Child"
                     value={lastName}
                     onChange={(e) => setLastName(e.target.value)}
-                    className="bg-slate-800 border-white/10 text-white"
+                    className="bg-white/5 border-white/10 text-white focus:border-cyan-500/50 focus:ring-0 transition-colors"
                     data-testid="input-register-lastName"
                   />
                 </div>
@@ -466,7 +518,7 @@ export function AuthModal({ open, onOpenChange, onForgotPassword }: AuthModalPro
                   placeholder="consciousness@spacechild.io"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="bg-slate-800 border-white/10 text-white"
+                  className="bg-white/5 border-white/10 text-white focus:border-cyan-500/50 focus:ring-0 transition-colors"
                   required
                   data-testid="input-register-email"
                 />
@@ -497,31 +549,33 @@ export function AuthModal({ open, onOpenChange, onForgotPassword }: AuthModalPro
               {displayError && (
                 <p className="text-red-400 text-sm" data-testid="text-auth-error">{displayError}</p>
               )}
-              <Button
+              
+              <GlassButton
                 type="submit"
-                className="w-full bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-600 hover:to-purple-600"
+                className="w-full py-6"
                 disabled={isLoading}
-                data-testid="button-register-submit"
+                testId="button-register-submit"
               >
                 {isLoading ? (
                   <Loader2 className="w-4 h-4 animate-spin mr-2" />
                 ) : (
-                  <img src={logoImage} alt="" className="w-4 h-4 rounded mr-2 mix-blend-screen" />
+                  <Sparkles className="w-4 h-4 mr-2 text-cyan-400" />
                 )}
                 Create Account
-              </Button>
+              </GlassButton>
             </form>
           </TabsContent>
         </Tabs>
 
-        <div className="mt-4 pt-4 border-t border-white/10">
-          <p className="text-xs text-gray-500 text-center">
+        <div className="mt-6 pt-4 border-t border-white/10">
+          <p className="text-[10px] text-gray-500 text-center uppercase tracking-widest leading-relaxed">
             By signing up, you agree to our Terms of Service and Privacy Policy.
             <br />
-            <span className="text-cyan-400">Powered by Space Child Auth with ZKP</span>
+            <span className="text-cyan-400/60">Powered by Space Child Auth with ZKP</span>
           </p>
         </div>
       </DialogContent>
     </Dialog>
   );
 }
+
