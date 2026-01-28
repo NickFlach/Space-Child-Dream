@@ -152,7 +152,7 @@ export default function HomePage() {
                   }}
                   className="mr-3 relative"
                 >
-                  <img src="/favicon.png" alt="Icon" className="w-8 h-8 object-contain" />
+                  <img src="/icon-512.png" alt="Icon" className="w-8 h-8 object-contain" />
                   <motion.div
                     className="absolute inset-0 bg-white/20 blur-xl rounded-full"
                     animate={{
